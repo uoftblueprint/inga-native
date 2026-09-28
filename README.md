@@ -1,6 +1,6 @@
 # Inga
 
-Mobile app and API in one repository. The two apps stay separate.
+PLs Please edit this as you need !!!
 
 ## Architecture
 
