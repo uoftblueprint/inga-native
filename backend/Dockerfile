@@ -20,7 +20,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 
 # Copy the actual source code.
-COPY src .
+COPY . .
 
 # Expose port 8000 so that localhost can reach the backend.
 EXPOSE 8000
