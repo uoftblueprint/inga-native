@@ -1,0 +1,9 @@
+[pytest]
+DJANGO_SETTINGS_MODULE="src.config.settings"
+minversion = "9.0"
+testpaths = [
+    "tests",
+]
+env_files = [
+    ".env",
+]

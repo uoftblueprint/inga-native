@@ -5,3 +5,5 @@ djangorestframework==3.18.1
 sqlparse==0.6.0
 pytest
 pytest-django
+python-dotenv
+pytest-env
