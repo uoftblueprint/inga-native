@@ -7,3 +7,4 @@ pytest
 pytest-django
 python-dotenv
 pytest-env
+dj-database-url
