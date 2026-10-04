@@ -2,6 +2,8 @@ services:
   postgres:
     image: postgres:latest
     container_name: inga-postgres
+    # These credentials are safe to use here because they are
+    # only for local development purposes and won't be used in production.
     environment:
       POSTGRES_DB: inga
       POSTGRES_USER: postgres
@@ -12,15 +14,37 @@ services:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres" ]
-      interval: 10s
+      interval: 30s
       timeout: 10s
-      retries: 5
+      retries: 3
+
+  silo:
+    image: pgsty/silo:latest
+    container_name: silo
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    # These credentials are safe to use here because they are
+    # only for local development purposes and won't be used in production.
+    environment:
+      MINIO_ROOT_USER: silo-admin
+      MINIO_ROOT_PASSWORD: silo-password
+    volumes:
+      - silo-data:/data
+    healthcheck:
+      test: [ "CMD", "silo", "healthcheck", "ready" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: inga-backend
+    # This will make sure the container has every local env variable needed.
     env_file:
       - ./backend/.env.local
     ports:
@@ -28,3 +52,9 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      silo:
+        condition: service_healthy
+
+volumes:
+  silo-data:
+  postgres_data:
