@@ -5,5 +5,5 @@ from .views import ProjectListView, ProjectSiteListView
 
 # Mounted at /api/projects/ by config/urls.py.
 urlpatterns = [path("", ProjectListView.as_view(), name="project-list"),
-               path("<int:project_id>/sites/", ProjectSiteListView.as_view(), name="project-site-list"),
+               path("<int:project_id>/sites/", ProjectSiteListView.as_view(), name="project-site-list"), # we need specific id values back so angled brackets
                ]
