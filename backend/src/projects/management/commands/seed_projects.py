@@ -1,4 +1,6 @@
-from .models import Project, Region, Site
+from decimal import Decimal
+from django.core.management.base import BaseCommand
+from projects.models import Project, Region, Site
 
 """
 just random data
@@ -13,6 +15,8 @@ Honduras has 18 deparnment(like states) and there is a capital(head city) for ev
 
 assuming each deparment is a region
 """
+
+# Honduran departments, using the coordinates of each department's capital
 
 REGIONS = {
     "Atlántida": ("15.779170", "-86.793060"),  # La Ceiba
@@ -34,7 +38,7 @@ PROJECTS = [
             "Notes": "text",
         },
         "sites": [
-            # (name, region, adresss w/ municipality, description)
+            # (name, region, address w/ municipality, description)
             ("Finca El Naranjo", "Atlántida", "Aldea El Naranjo, La Ceiba",
              "Steep plot above the river; access by footpath in rainy season."),
             ("Finca La Esperanza", "Atlántida", "Aldea La Esperanza, Tela", "New planting this season."),
@@ -51,5 +55,45 @@ PROJECTS = [
         "sites": [
             ("Finca El Encino", "Yoro", "Aldea El Encino, Yoro", ""),
         ],
-    }
+    },
 ]
+
+
+class Command(BaseCommand):
+    help = "Seeds the database with realistic projects, regions, and farms."
+
+    def handle(self, *args, **options):
+        self.stdout.write("Seeding project data...")
+
+        # 1. Regions
+        regions = {}
+        for name, (lat, lon) in REGIONS.items():
+            reg, _ = Region.objects.get_or_create(
+                name=name,
+                defaults={"latitude": Decimal(lat), "longitude": Decimal(lon)},
+            )
+            regions[reg.name] = reg
+
+        # 2. Projects, and 3. Sites / Farms inside each one
+        for item in PROJECTS:
+            project, _ = Project.objects.get_or_create(
+                name=item["name"],
+                defaults={
+                    "description": item["description"],
+                    "active": item["active"],
+                    "log_schema": item["log_schema"],
+                },
+            )
+
+            for name, region, address, description in item["sites"]:
+                Site.objects.get_or_create(
+                    project=project,
+                    name=name,
+                    defaults={
+                        "region": regions[region],
+                        "address": address,
+                        "description": description,
+                    },
+                )
+
+        self.stdout.write(self.style.SUCCESS("Done seeding projects, regions, and sites!"))

@@ -1,27 +1,33 @@
-from django.shortcuts import get_object_or_404
-from django.views.generic import ListView
 from rest_framework.generics import ListAPIView
+from rest_framework.permissions import IsAuthenticated
 
-from .models import ProjectSite
-from .serializers import ProjectSerializer, SiteSerializer
+from projects.models import Project, Site
+from projects.serializers import ProjectSerializer, SiteSerializer
 
 
 class ProjectListView(ListAPIView):
     """GET /api/projects/ : the active programmes a worker can pick from."""
     serializer_class = ProjectSerializer
-    queryset = Project.objects.filter(active=True).order_by("name")
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        # Only return active projects to the field workers
+        return Project.objects.filter(active=True).order_by("name")
 
 
 class ProjectSiteListView(ListAPIView):  # this returns farms
     """GET /api/projects/<id>/sites/ : the farms in one active programme."""
 
     serializer_class = SiteSerializer
+    permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):  # diff request each time
-        project = get_object_or_404(Project, pk=self.kwargs["project_id"],
-                                    active=True)  # ex. self.kwargs == {"project_id": 3}
+    def get_queryset(self):
+        project_id = self.kwargs["project_id"]
 
+        # IMPORTANT: select_related("region") fixes the N+1 query problem!
         return (
-            Site.objects.filter(project=project).select_related("region").order_by("name")  # not too sure
-            # Site.objects.filter(project=project, workers=self.request.user) # if farmers are assignend to specific ones
+            Site.objects.filter(project_id=project_id)
+            .select_related("region")
+            .order_by("name")
         )
+

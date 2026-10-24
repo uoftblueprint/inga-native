@@ -1,7 +1,7 @@
 # Mounted at /api/projects/ by config/urls.py.
 from django.urls import path
 
-from .views import ProjectListView, ProjectSiteListView
+from projects.views import ProjectListView, ProjectSiteListView
 
 # Mounted at /api/projects/ by config/urls.py.
 urlpatterns = [path("", ProjectListView.as_view(), name="project-list"),

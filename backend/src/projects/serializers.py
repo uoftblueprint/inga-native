@@ -38,7 +38,7 @@ class ProjectSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Project
-        fields = ["id", "name", "is_active", "log_schema"]
+        fields = ["id", "name", "description", "active", "log_schema"]
 
 
 class SiteSerializer(serializers.ModelSerializer):
@@ -54,4 +54,4 @@ class SiteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Site
-        fields = ["id", "name", "region"]
+        fields = ["id", "project", "region", "name", "address", "description", ]
