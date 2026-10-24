@@ -36,7 +36,8 @@
       [
         "expo-image-picker",
         {
-          "cameraPermission": "Allow Inga to use the camera to take photos at the farm."
+          "cameraPermission": "Allow Inga to use the camera to take photos at the farm.",
+          "photosPermission": "Allow Inga to choose photos from your library."
         }
       ]
     ],
