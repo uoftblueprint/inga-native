@@ -20,7 +20,7 @@ async function getAccessToken(): Promise<string | null> {
 
 async function refreshAccessToken(): Promise<string | null> {
   const refresh = await SecureStore.getItemAsync("refresh");
-  if (!refresh) return null;
+  if (!refresh) return null; // user is signed out
 
   const response = await fetch(`${apiBaseUrl()}/api/accounts/refresh/`, {
     method: "POST",
@@ -30,12 +30,14 @@ async function refreshAccessToken(): Promise<string | null> {
 
   if (response.status === 401) return null;
   if (!response.ok) {
-    throw new Error(`Refresh failed (${response.status})`);
+    // i.e. not 200 to 299, and not 401 either, so not the user's fault
+    throw new Error(`Refresh failed (${response.status})`); // user is not signed out
   }
 
   const data = await response.json();
   await SecureStore.setItemAsync("access", data.access);
   if (data.refresh) {
+    // only true if backend sent a new refresh token
     await SecureStore.setItemAsync("refresh", data.refresh);
   }
   return data.access;
@@ -81,9 +83,17 @@ export async function apiFetch(
     return response;
   }
 
-  const newAccess = await refreshOnce();
+  let newAccess: string | null;
+  try {
+    newAccess = await refreshOnce();
+  } catch {
+    // Couldn't reach the server: keep the tokens, let the caller see the 401
+    return response;
+  }
+
   if (!newAccess) {
-    return response; // refresh failed; task 2 handles this case
+    await endSession();
+    return response;
   }
 
   return send(path, options, newAccess);
