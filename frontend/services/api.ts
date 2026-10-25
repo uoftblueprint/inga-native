@@ -51,11 +51,12 @@ function refreshOnce(): Promise<string | null> {
   return refreshPromise;
 }
 
-export async function apiFetch(
+export async function send(
   path: string,
-  options: RequestInit = {},
+  options: RequestInit,
+  access: string | null,
 ): Promise<Response> {
-  const access = await getAccessToken();
+  // const access = await getAccessToken();
 
   const headers = new Headers(options.headers);
   if (access) {
