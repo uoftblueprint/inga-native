@@ -17,6 +17,29 @@ async function getAccessToken(): Promise<string | null> {
   }
 }
 
+async function refreshAccessToken(): Promise<string | null> {
+  try {
+    const refresh = await SecureStore.getItemAsync("refresh");
+    if (!refresh) return null;
+
+    const response = await fetch(`${apiBaseUrl()}/api/accounts/refresh/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh }),
+    });
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    await SecureStore.setItemAsync("access", data.access);
+    if (data.refresh) {
+      await SecureStore.setItemAsync("refresh", data.refresh);
+    }
+    return data.access;
+  } catch {
+    return null;
+  }
+}
+
 export async function apiFetch(
   path: string,
   options: RequestInit = {},
