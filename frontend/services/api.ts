@@ -1,4 +1,5 @@
 import type { HealthResponse } from "@/types/health";
+import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 
 function apiBaseUrl(): string {
@@ -103,4 +104,9 @@ export async function clearSession(): Promise<void> {
   } catch (error) {
     console.warn("Could not clear session:", error);
   }
+}
+
+async function endSession(): Promise<void> {
+  await clearSession();
+  router.replace("/login"); // swap current screen for /login to ensure back button does not return to broken screen
 }
