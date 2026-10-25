@@ -95,3 +95,12 @@ export async function getHealth(): Promise<HealthResponse> {
   }
   return response.json() as Promise<HealthResponse>;
 }
+
+export async function clearSession(): Promise<void> {
+  try {
+    await SecureStore.deleteItemAsync("access");
+    await SecureStore.deleteItemAsync("refresh");
+  } catch (error) {
+    console.warn("Could not clear session:", error);
+  }
+}
