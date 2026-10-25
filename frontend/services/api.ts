@@ -69,6 +69,25 @@ export async function send(
   return fetch(`${apiBaseUrl()}${path}`, { ...options, headers });
 }
 
+export async function apiFetch(
+  path: string,
+  options: RequestInit = {},
+): Promise<Response> {
+  const access = await getAccessToken();
+  const response = await send(path, options, access);
+
+  if (response.status !== 401 || !access) {
+    return response;
+  }
+
+  const newAccess = await refreshOnce();
+  if (!newAccess) {
+    return response; // refresh failed; task 2 handles this case
+  }
+
+  return send(path, options, newAccess);
+}
+
 export async function getHealth(): Promise<HealthResponse> {
   const response = await fetch(`${apiBaseUrl()}/api/health/`);
   if (!response.ok) {
