@@ -40,6 +40,17 @@ async function refreshAccessToken(): Promise<string | null> {
   }
 }
 
+let refreshPromise: Promise<string | null> | null = null;
+
+function refreshOnce(): Promise<string | null> {
+  if (!refreshPromise) {
+    refreshPromise = refreshAccessToken().finally(() => {
+      refreshPromise = null;
+    });
+  }
+  return refreshPromise;
+}
+
 export async function apiFetch(
   path: string,
   options: RequestInit = {},
