@@ -7,11 +7,10 @@ export type PhotoResult =
   | { status: "denied"; canAskAgain: boolean }
   | { status: "unavailable" };
 
-// Photos off a modern phone can be 5MB+, and workers are on rural
-// connections, so we shrink before uploading.
 const MAX_WIDTH = 1600;
 const JPEG_QUALITY = 0.7;
 
+/** Converts the picker's raw result into a PhotoResult */
 function toResult(result: ImagePicker.ImagePickerResult): PhotoResult {
   if (result.canceled) {
     return { status: "cancelled" };
