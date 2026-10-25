@@ -10,7 +10,7 @@ function apiBaseUrl(): string {
   return value.replace(/\/$/, "");
 }
 
-async function getAccessToken(): Promise<string | null> {
+export async function getAccessToken(): Promise<string | null> {
   try {
     return await SecureStore.getItemAsync("access");
   } catch {
