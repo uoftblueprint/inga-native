@@ -24,7 +24,7 @@ class Migration(migrations.Migration):
                 ('active', models.BooleanField(default=True)),
                 ('name', models.CharField(max_length=200)),
                 ('description', models.TextField(blank=True)),
-                ('log_schema', models.JSONField(default=dict, validators=[projects.validators.validate_log_schema])),
+                ('log_schema', models.JSONField(blank=True, default=dict, validators=[projects.validators.validate_log_schema])),
             ],
             options={
                 'constraints': [models.UniqueConstraint(django.db.models.functions.text.Lower('name'), name='unique_project_name_ci')],

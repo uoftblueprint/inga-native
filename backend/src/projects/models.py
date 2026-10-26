@@ -45,7 +45,7 @@ class Project(StandardModel):
 
     name = models.CharField(max_length=200)
     description = models.TextField(blank=True)
-    log_schema = models.JSONField(default=dict, validators=[validate_log_schema])
+    log_schema = models.JSONField(default=dict, blank=True, validators=[validate_log_schema])
 
     # note: timestamps come from StandardModel
     # note: has active field
