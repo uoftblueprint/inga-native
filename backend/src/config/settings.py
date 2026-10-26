@@ -111,6 +111,12 @@ DATABASES = {
     'default': default_config
 }
 
+# S3-compatible configuration (Silo for local / Cloudflare R2 for prod)
+R2_ENDPOINT_URL = os.environ.get("R2_ENDPOINT_URL")
+R2_ACCESS_KEY_ID = os.environ.get("R2_ACCESS_KEY_ID")
+R2_SECRET_ACCESS_KEY = os.environ.get("R2_SECRET_ACCESS_KEY")
+R2_BUCKET_NAME = os.environ.get("R2_BUCKET_NAME")
+
 # Set before the first migration, because changing it later means dropping
 # the database.
 AUTH_USER_MODEL = "accounts.User"
@@ -139,7 +145,6 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Internationalization
 # https://docs.djangoproject.com/en/6.1/topics/i18n/
-
 LANGUAGE_CODE = "en-us"
 
 TIME_ZONE = "UTC"
