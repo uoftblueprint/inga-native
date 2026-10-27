@@ -58,12 +58,14 @@ export default function LogFormScreen() {
       JSON.stringify({ site: Number(siteId), uuid, metadata })
     );
 
-    setDone(true);
-    setValues({});
-    setErrors({});
-    setUuid(Crypto.randomUUID());
-    setSubmitting(false);
-    inFlight.current = false;
+    setTimeout(() => {
+      setDone(true);
+      setValues({});
+      setErrors({});
+      setUuid(Crypto.randomUUID());
+      setSubmitting(false);
+      inFlight.current = false;
+    }, 1500);
   }
 
   if (done) {
