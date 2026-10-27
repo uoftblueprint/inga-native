@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react";
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, View, Button} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { getHealth } from "@/services/api";
+import { useRouter } from "expo-router";
 
 type ConnectionState = "loading" | "connected" | "error";
 
 export default function HomeScreen() {
   const [state, setState] = useState<ConnectionState>("loading");
   const [detail, setDetail] = useState("");
+  const router = useRouter();
 
   useEffect(() => {
     let cancelled = false;
@@ -45,6 +47,9 @@ export default function HomeScreen() {
         <Text style={styles.status}>{statusLabel}</Text>
         {state === "loading" ? <ActivityIndicator /> : null}
         {state === "error" ? <Text style={styles.detail}>{detail}</Text> : null}
+
+        <Button title="Open projects" onPress={() => router.push("/projects")} />
+
       </View>
     </SafeAreaView>
   );
