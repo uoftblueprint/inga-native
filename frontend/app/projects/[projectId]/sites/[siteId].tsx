@@ -70,7 +70,7 @@ export default function LogFormScreen() {
     return (
       <View style={styles.center}>
         <Text>Log submitted.</Text>
-        <Button title="Back to Sites" onPress={() => router.back()} />
+        <Button title="Back to Projects" onPress={() => router.replace("/projects")} />
       </View>
     );
   }

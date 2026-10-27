@@ -1,4 +1,4 @@
-import { Switch, Text, TextInput, View } from "react-native";
+import { StyleSheet, Switch, Text, TextInput, View } from "react-native";
 import type { FieldType } from "@/types/form";
 
 type Props = {
@@ -11,13 +11,14 @@ type Props = {
 
 export function SchemaField({ label, type, value, onChange, error }: Props) {
   return (
-    <View>
+    <View style={styles.field}>
       <Text>{label}</Text>
 
       {type === "boolean" ? (
         <Switch value={value === true} onValueChange={onChange} />
       ) : (
         <TextInput
+          style={styles.input}
           value={typeof value === "string" ? value : ""}
           onChangeText={onChange}
           keyboardType={type === "numerical" ? "numeric" : "default"}
@@ -28,3 +29,14 @@ export function SchemaField({ label, type, value, onChange, error }: Props) {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  field: { alignItems: "center", padding: 8 },
+  input: {
+    width: 240,
+    borderWidth: 1,
+    borderColor: "#999",
+    borderRadius: 6,
+    padding: 10,
+  },
+});
