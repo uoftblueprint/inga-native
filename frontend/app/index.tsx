@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import PhotoPicker from "@/components/PhotoPicker";
 import { getHealth } from "@/services/api";
 
 type ConnectionState = "loading" | "connected" | "error";
@@ -45,6 +46,7 @@ export default function HomeScreen() {
         <Text style={styles.status}>{statusLabel}</Text>
         {state === "loading" ? <ActivityIndicator /> : null}
         {state === "error" ? <Text style={styles.detail}>{detail}</Text> : null}
+        <PhotoPicker />
       </View>
     </SafeAreaView>
   );
