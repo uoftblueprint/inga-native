@@ -1,34 +1,8 @@
-from decimal import Decimal
 import pytest
-from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient
 from projects.models import Project, Region, Site
 from io import StringIO
 from django.core.management import call_command
-
-
-@pytest.fixture
-def auth_client():
-    user = get_user_model().objects.create_user(
-        username="fieldworker", password="password123"
-    )
-    client = APIClient()
-    client.force_authenticate(user=user)
-    return client
-
-
-@pytest.fixture
-def test_data():
-    region = Region.objects.create(
-        name="Test Valley", latitude=Decimal("15.70"), longitude=Decimal("-86.70")
-    )
-    active = Project.objects.create(name="Active Project", active=True, log_schema={"trees": "numerical"})
-    inactive = Project.objects.create(name="Inactive Project", active=False)
-
-    site1 = Site.objects.create(project=active, region=region, name="Farm 1")
-    site2 = Site.objects.create(project=active, region=region, name="Farm 2")
-
-    return {"active": active, "inactive": inactive, "region": region, "sites": [site1, site2]}
 
 
 @pytest.mark.django_db
@@ -73,14 +47,6 @@ def test_endpoints_require_auth():
     anon = APIClient()
     assert anon.get("/api/projects/").status_code == 401
     assert anon.get("/api/projects/1/sites/").status_code == 401
-
-
-@pytest.fixture
-def seeded():
-    """Run the seed command the same way `manage.py seed_projects` would.
-    stdout=StringIO() swallows its "Seeding..." messages so they don't clutter
-    the test output."""
-    call_command("seed_projects", stdout=StringIO())
 
 
 @pytest.mark.django_db
@@ -142,7 +108,6 @@ def test_sites_only_from_requested_project(auth_client, test_data):
     res = auth_client.get(f"/api/projects/{test_data['active'].id}/sites/")
 
     assert "Other Farm" not in [s["name"] for s in res.json()]
-
 
 # @pytest.mark.django_db
 # def test_unknown_project_returns_empty_list(auth_client):
