@@ -2,7 +2,7 @@ import { ImageManipulator, SaveFormat } from "expo-image-manipulator";
 import * as ImagePicker from "expo-image-picker";
 
 export type PhotoResult =
-  | { status: "success"; asset: ImagePicker.ImagePickerAsset }
+  | { status: "success"; assets: ImagePicker.ImagePickerAsset[] }
   | { status: "cancelled" }
   | { status: "denied"; canAskAgain: boolean }
   | { status: "unavailable" };
@@ -15,7 +15,7 @@ function toResult(result: ImagePicker.ImagePickerResult): PhotoResult {
   if (result.canceled) {
     return { status: "cancelled" };
   }
-  return { status: "success", asset: result.assets[0] };
+  return { status: "success", assets: result.assets };
 }
 
 export async function takePhoto(): Promise<PhotoResult> {
@@ -40,7 +40,7 @@ export async function pickPhoto(): Promise<PhotoResult> {
   }
 
   return toResult(
-    await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"] }),
+    await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], allowsMultipleSelection: true, }),
   );
 }
 
