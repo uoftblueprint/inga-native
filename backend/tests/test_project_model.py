@@ -5,16 +5,6 @@ from django.db import IntegrityError, transaction
 from projects.models import Project, Region, Site
 
 
-@pytest.fixture
-def region(db):
-    return Region.objects.create(name="Northern District")
-
-
-@pytest.fixture
-def project(db):
-    return Project.objects.create(name="Inga Alley Cropping")
-
-
 # test uniqueness
 
 
