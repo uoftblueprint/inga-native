@@ -14,6 +14,23 @@ import { useProject } from "@/hooks/useForm";
 import { SchemaField } from "@/components/SchemaField";
 import { buildPayload } from "@/lib/buildPayload";
 
+
+const styles = StyleSheet.create({
+  flex: { flex: 1 },
+  content: {
+    flexGrow: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 24,
+  },
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 24,
+}
+})
+
 export default function LogFormScreen() {
   const { projectId, siteId } = useLocalSearchParams<{
     projectId: string;
@@ -43,7 +60,7 @@ export default function LogFormScreen() {
     if (inFlight.current) return;
 
     // convert numeric strings to numbers and drop blanks
-    const { metadata, invalid } = buildPayload(schema, values);
+    const {metadata, invalid} = buildPayload(schema, values);
     if (Object.keys(invalid).length) {
       setErrors(invalid); // don't send value that failed conversion
       return;
@@ -51,21 +68,6 @@ export default function LogFormScreen() {
 
     inFlight.current = true;
     setSubmitting(true);
-
-    // stand-in for POST
-    console.log(
-      "SUBMIT",
-      JSON.stringify({ site: Number(siteId), uuid, metadata })
-    );
-
-    setTimeout(() => {
-      setDone(true);
-      setValues({});
-      setErrors({});
-      setUuid(Crypto.randomUUID());
-      setSubmitting(false);
-      inFlight.current = false;
-    }, 1500);
   }
 
   if (done) {
@@ -109,19 +111,3 @@ export default function LogFormScreen() {
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  flex: { flex: 1 },
-  content: {
-    flexGrow: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 24,
-  },
-  center: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 24,
-  },
-});
