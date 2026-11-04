@@ -1,4 +1,4 @@
-import type { Project, Site } from '../types/form';
+import type { Project, Site } from '@/types/form';
 
 export const PROJECTS: Project[] = [
   {
