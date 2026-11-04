@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.db import models
 
+from submissions import Submission
+
 
 class Photo(models.Model):
     """Store metadata for an uploaded photo."""
@@ -19,9 +21,9 @@ class Photo(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     
-    # submission = models.ForeignKey(
-    #     "submissions.Submission",
-    #     null=True,
-    #     blank=True,
-    #     on_delete=models.CASCADE,
-    # )
+    submission = models.ForeignKey(
+        Submission,
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+    )

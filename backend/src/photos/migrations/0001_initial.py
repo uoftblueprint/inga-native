@@ -29,15 +29,15 @@ class Migration(migrations.Migration):
                 ("content_type", models.CharField(max_length=255)),
                 ("size_bytes", models.PositiveBigIntegerField()),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
-                # (
-                #     "submission",
-                #     models.ForeignKey(
-                #         blank=True,
-                #         null=True,
-                #         on_delete=django.db.models.deletion.CASCADE,
-                #         to="submissions.submission",
-                #     ),
-                # ),
+                (
+                    "submission",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="submissions.submission",
+                    ),
+                ),
                 (
                     "uploaded_by",
                     models.ForeignKey(
