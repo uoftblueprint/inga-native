@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View, Button} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import PhotoPicker from "@/components/PhotoPicker";
 import { getHealth } from "@/services/api";
 import { useRouter } from "expo-router";
 import {
@@ -72,6 +73,7 @@ export default function HomeScreen() {
         <Text>{username ?? "Loading user..."}</Text>
         {state === "loading" ? <ActivityIndicator /> : null}
         {state === "error" ? <Text style={styles.detail}>{detail}</Text> : null}
+        <PhotoPicker />
 
         <Button title="Open projects" onPress={() => router.push("/projects")} />
 
