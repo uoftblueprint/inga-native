@@ -3,6 +3,7 @@ services:
     # We are using the version of Postgres with postgis extension
     # because we need to store geospatial data in our database.
     image: postgis/postgis:latest
+    platform: linux/amd64
     container_name: inga-postgres
     # These credentials are safe to use here because they are
     # only for local development purposes and won't be used in production.

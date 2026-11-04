@@ -32,6 +32,13 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Allow Inga to use the camera to take photos at the farm.",
+          "photosPermission": "Allow Inga to choose photos from your library."
+        }
       ]
     ],
     "experiments": {
