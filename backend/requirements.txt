@@ -10,4 +10,5 @@ pytest-env
 dj-database-url
 psycopg2
 psycopg[binary]
+boto3
 djangorestframework-simplejwt
