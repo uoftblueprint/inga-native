@@ -67,6 +67,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
+    volumes:
+      - ./backend:/inga-native
 
 volumes:
   silo-data:
