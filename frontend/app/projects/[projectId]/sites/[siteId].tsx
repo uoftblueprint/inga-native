@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Button,
   KeyboardAvoidingView,
   Platform,
@@ -13,23 +14,8 @@ import * as Crypto from "expo-crypto";
 import { useProject } from "@/hooks/useForm";
 import { SchemaField } from "@/components/SchemaField";
 import { buildPayload } from "@/lib/buildPayload";
-
-
-const styles = StyleSheet.create({
-  flex: { flex: 1 },
-  content: {
-    flexGrow: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 24,
-  },
-  center: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 24,
-}
-})
+import { isUuidConflict, parseErrors } from "@/lib/parseErrors";
+import { postSubmission } from "@/services/submissions";
 
 export default function LogFormScreen() {
   const { projectId, siteId } = useLocalSearchParams<{
@@ -42,14 +28,24 @@ export default function LogFormScreen() {
   const [uuid, setUuid] = useState(() => Crypto.randomUUID());
   const [values, setValues] = useState<Record<string, string | boolean>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [banner, setBanner] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
   const inFlight = useRef(false);
+
+  if (project.isPending) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator />
+      </View>
+    );
+  }
 
   if (project.isError || !project.data) {
     return (
       <View style={styles.center}>
         <Text>Project not found.</Text>
+        <Button title="Retry" onPress={project.refetch} />
       </View>
     );
   }
@@ -59,22 +55,46 @@ export default function LogFormScreen() {
   function handleSubmit() {
     if (inFlight.current) return;
 
-    // convert numeric strings to numbers and drop blanks
-    const {metadata, invalid} = buildPayload(schema, values);
+    // numbers converted, blanks omitted
+    const { metadata, invalid } = buildPayload(schema, values);
     if (Object.keys(invalid).length) {
-      setErrors(invalid); // don't send value that failed conversion
+      setErrors(invalid);
       return;
     }
 
     inFlight.current = true;
     setSubmitting(true);
+    setBanner(null);
+
+    const finish = () => {
+      setDone(true);
+      setValues({});
+      setErrors({});
+      setUuid(Crypto.randomUUID());
+    };
+
+    postSubmission({ site: Number(siteId), uuid, metadata })
+      .then(finish)
+      .catch((err) => {
+        if (isUuidConflict(err)) return finish();
+        const { fieldErrors, general } = parseErrors(err, schema);
+        setErrors(fieldErrors);
+        setBanner(general);
+      })
+      .finally(() => {
+        setSubmitting(false);
+        inFlight.current = false;
+      });
   }
 
   if (done) {
     return (
       <View style={styles.center}>
         <Text>Log submitted.</Text>
-        <Button title="Back to Projects" onPress={() => router.replace("/projects")} />
+        <Button
+          title="Back to Projects"
+          onPress={() => router.replace("/projects")}
+        />
       </View>
     );
   }
@@ -88,6 +108,8 @@ export default function LogFormScreen() {
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.content}
       >
+        {!!banner && <Text>{banner}</Text>}
+
         {Object.entries(schema).map(([key, type]) => (
           <SchemaField
             key={key}
@@ -111,3 +133,9 @@ export default function LogFormScreen() {
     </KeyboardAvoidingView>
   );
 }
+
+const styles = StyleSheet.create({
+  flex: { flex: 1 },
+  content: { flexGrow: 1, justifyContent: "center", alignItems: "center" },
+  center: { flex: 1, justifyContent: "center", alignItems: "center" },
+});
