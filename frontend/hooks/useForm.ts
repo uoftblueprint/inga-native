@@ -5,7 +5,7 @@ export function useProjects() {
 }
 
 export function useSites(projectId: number) {
-  const data = SITES.filter((s) => s.projectId === projectId);
+  const data = SITES.filter((s) => s.project === projectId);
   return { data, isPending: false, isError: false};
 }
 
