@@ -1,7 +1,7 @@
 import uuid
 from django.conf import settings
 from django.db import models
-from projects import Site
+from projects.models import Site
 
 
 class Submission(models.Model):

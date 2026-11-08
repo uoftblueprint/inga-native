@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.db import models
 
-from submissions import Submission
+from submissions.models import Submission
 
 
 class Photo(models.Model):
