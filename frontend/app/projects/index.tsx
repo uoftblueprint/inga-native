@@ -1,10 +1,35 @@
-import { FlatList, Pressable, StyleSheet, Text } from "react-native";
+import {
+  ActivityIndicator,
+  Button,
+  FlatList,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { useRouter } from "expo-router";
 import { useProjects } from "@/hooks/useForm";
 
 export default function ProjectPicker() {
   const router = useRouter();
-  const { data } = useProjects();
+  const { data, isPending, isError, refetch } = useProjects();
+
+  if (isPending) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator />
+      </View>
+    );
+  }
+
+  if (isError) {
+    return (
+      <View style={styles.center}>
+        <Text>Could not load projects.</Text>
+        <Button title="Retry" onPress={refetch} />
+      </View>
+    );
+  }
 
   return (
     <FlatList
@@ -27,6 +52,12 @@ export default function ProjectPicker() {
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 24,
+  },
+  center: {
+    flex: 1,
     justifyContent: "center",
     alignItems: "center",
     padding: 24,

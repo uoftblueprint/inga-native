@@ -1,11 +1,36 @@
-import { FlatList, Pressable, StyleSheet, Text } from "react-native";
+import {
+  ActivityIndicator,
+  Button,
+  FlatList,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSites } from "@/hooks/useForm";
 
 export default function SitePicker() {
   const { projectId } = useLocalSearchParams<{ projectId: string }>();
   const router = useRouter();
-  const { data } = useSites(Number(projectId));
+  const { data, isPending, isError, refetch } = useSites(Number(projectId));
+
+  if (isPending) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator />
+      </View>
+    );
+  }
+
+  if (isError) {
+    return (
+      <View style={styles.center}>
+        <Text>Could not load sites.</Text>
+        <Button title="Retry" onPress={refetch} />
+      </View>
+    );
+  }
 
   return (
     <FlatList
@@ -15,7 +40,6 @@ export default function SitePicker() {
       ListEmptyComponent={<Text>No sites.</Text>}
       renderItem={({ item }) => (
         <Pressable
-          style={styles.row}
           onPress={() => router.push(`/projects/${projectId}/sites/${item.id}`)}
         >
           <Text>{item.name}</Text>
@@ -26,11 +50,6 @@ export default function SitePicker() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flexGrow: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 24,
-  },
-  row: { padding: 16 },
+  container: { flexGrow: 1, justifyContent: "center", alignItems: "center" },
+  center: { flex: 1, justifyContent: "center", alignItems: "center" },
 });
