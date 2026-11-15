@@ -127,8 +127,9 @@ class QuantityKind(models.TextChoices):
 
 
 UNIT_DEFINITIONS = {
-    "unit": ("Units", QuantityKind.COUNT),
-    "bag": ("Bags", QuantityKind.COUNT),
+    "seeds": ("Seeds", QuantityKind.COUNT),
+    "seedlings": ("Seedlings", QuantityKind.COUNT),
+    "saplings": ("Saplings", QuantityKind.COUNT),
     "kg": ("Kilograms", QuantityKind.MEASURE),
     "g": ("Grams", QuantityKind.MEASURE),
     "lb": ("Pounds", QuantityKind.MEASURE),
