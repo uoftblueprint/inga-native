@@ -35,16 +35,27 @@ const MIGRATIONS: string[] = [
     PRIMARY KEY (worker_id, id)
   );
 
-  CREATE TABLE sites (
-    worker_id  TEXT NOT NULL,
-    id         INTEGER NOT NULL,
-    project_id INTEGER NOT NULL,
-    region_id  INTEGER,
-    name       TEXT NOT NULL,
-    data       TEXT NOT NULL,
-    PRIMARY KEY (worker_id, id)
-  );
-  CREATE INDEX idx_sites_project ON sites (worker_id, project_id);
+  CREATE TABLE villages (
+  worker_id TEXT NOT NULL,
+  id        INTEGER NOT NULL,
+  region_id INTEGER NOT NULL,
+  name      TEXT NOT NULL,
+  data      TEXT NOT NULL,
+  PRIMARY KEY (worker_id, id)
+);
+CREATE INDEX idx_villages_region ON villages (worker_id, region_id);
+
+CREATE TABLE sites (
+  worker_id  TEXT NOT NULL,
+  id         INTEGER NOT NULL,
+  project_id INTEGER NOT NULL,
+  region_id  INTEGER NOT NULL,   
+  village_id INTEGER,            
+  name       TEXT NOT NULL,
+  data       TEXT NOT NULL,
+  PRIMARY KEY (worker_id, id)
+);
+CREATE INDEX idx_sites_project ON sites (worker_id, project_id);
 
   CREATE TABLE supply_items (
     worker_id TEXT NOT NULL,
