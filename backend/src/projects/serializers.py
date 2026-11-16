@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Project, Region, Site
+from .models import Project, Region, Site, SupplyItem, Village
 
 """
 Serializers for the projects app
@@ -10,7 +10,9 @@ so they can pick where they are.
 
 RegionSerializer
 ProjectSerializer
+VillageSerializer
 SiteSerializer
+SupplyItemSerializer
 """
 
 
@@ -22,6 +24,14 @@ class RegionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Region
         fields = ["id", "name", "latitude", "longitude"]
+
+
+class VillageSerializer(serializers.ModelSerializer):
+    """A village a farm may sit in. `region` is the region's id."""
+
+    class Meta:
+        model = Village
+        fields = ["id", "name", "region"]
 
 
 class ProjectSerializer(serializers.ModelSerializer):
@@ -44,14 +54,24 @@ class ProjectSerializer(serializers.ModelSerializer):
 class SiteSerializer(serializers.ModelSerializer):
     """A farm inside one programme. Used by GET /api/projects/<id>/sites/.
 
-     - `id`: what submissions and photos attach to. Required because farm
-      names are only unique *within* a programme, so two programmes can each
-      have a farm with the same name.
-    - `project` is left out on purpose: the app already chose the programme
-      to reach this URL, so repeating its id on every farm is redundant.
+     - `id`: what submissions and photos attach to
     """
     region = RegionSerializer(read_only=True)
+    village = VillageSerializer(read_only=True)
 
     class Meta:
         model = Site
-        fields = ["id", "project", "region", "name", "address", "description", ]
+        fields = ["id", "project", "region", "village", "name", "address", "description"]
+
+
+class SupplyItemSerializer(serializers.ModelSerializer):
+    """A supply a worker can pick in a delivery row. Used by GET /api/supply-items/.
+
+    - `quantity_kind`: "count" (positive whole numbers) or "measure" (positive
+      decimals). Derived from `unit`, so it is read-only and never stored.
+    """
+    quantity_kind = serializers.ReadOnlyField()
+
+    class Meta:
+        model = SupplyItem
+        fields = ["id", "name", "category", "unit", "quantity_kind"]

@@ -95,7 +95,7 @@ def test_response_fields(auth_client, test_data):
     assert set(project) == {"id", "name", "description", "active", "log_schema"}
 
     site = auth_client.get(f"/api/projects/{test_data['active'].id}/sites/").json()[0]
-    assert set(site) == {"id", "project", "region", "name", "address", "description"}
+    assert set(site) == {"id", "project", "region", "village", "name", "address", "description"}
     assert set(site["region"]) == {"id", "name", "latitude", "longitude"}
 
 
