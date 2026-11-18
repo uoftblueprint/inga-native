@@ -16,10 +16,17 @@ export type Region = {
   longitude: string | null;
 };
 
+export type Village = {
+  id: number;
+  name: string;
+  region: number;
+};
+
 export type Site = {
   id: number;
   project: number;
   region: Region;
+  village: Village | null;
   name: string;
   address: string;
   description: string;
