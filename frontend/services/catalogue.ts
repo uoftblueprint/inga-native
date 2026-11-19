@@ -1,21 +1,22 @@
 import type { Db } from "@/services/db";
+import type { Project, Region, Site } from "@/types/form";
 
 // Shapes below follow the backend serializers you listed. Anything not confirmed
 // yet (village, supply items) is kept loose, and the full JSON is stored anyway.
-export type Region = {
-  id: number;
-  name: string;
-  latitude: number | null;
-  longitude: number | null;
-};
+// export type Region = {
+//   id: number;
+//   name: string;
+//   latitude: string | null;
+//   longitude: string | null;
+// };
 
-export type Project = {
-  id: number;
-  name: string;
-  description: string;
-  active: boolean;
-  log_schema: unknown; // the form definition
-};
+// export type Project = {
+//   id: number;
+//   name: string;
+//   description: string;
+//   active: boolean;
+//   log_schema: unknown; // the form definition
+// };
 
 export type Village = {
   id: number;
@@ -23,7 +24,7 @@ export type Village = {
   name: string;
 };
 
-export type Site = {
+export type SiteWithVillage = {
   id: number;
   project: number;
   region: Region | number; // required
@@ -42,12 +43,12 @@ export type SupplyItem = {
 };
 
 /** Pulls the region id out of a site whether `region` is nested or just a number. */
-function regionIdOf(region: Site["region"]): number | null {
+function regionIdOf(region: SiteWithVillage["region"]): number | null {
   if (region === null || region === undefined) return null;
   return typeof region === "number" ? region : region.id;
 }
 
-function villageIdOf(v: Site["village"]): number | null {
+function villageIdOf(v: SiteWithVillage["village"]): number | null {
   if (v === null || v === undefined) return null;
   return typeof v === "number" ? v : v.id;
 }
@@ -146,7 +147,7 @@ export async function saveSites(
   db: Db,
   workerId: string,
   projectId: number,
-  sites: Site[],
+  sites: SiteWithVillage[],
 ): Promise<void> {
   await db.withExclusiveTransactionAsync(async (txn) => {
     await txn.runAsync(
