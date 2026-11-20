@@ -6,8 +6,8 @@ from .models import Submission
 class SubmissionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Submission
-        fields = ["id", "site", "uuid", "metadata", "created_at"]
-        read_only_fields = ["id", "created_at"]
+        fields = ["site", "uuid", "metadata", "created_at"]
+        read_only_fields = ["created_at"]
 
     def validate(self, attrs):
         metadata = attrs["metadata"]
