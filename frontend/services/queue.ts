@@ -20,6 +20,52 @@ export type EnqueueResult = {
   alreadyQueued: boolean;
 };
 
+export type QueuedPhoto = {
+  client_photo_id: string;
+  local_path: string;
+  content_type: string;
+  size_bytes: number;
+  status: "pending" | "uploaded" | "registered" | "failed";
+  upload_key: string | null;
+  last_error: string | null;
+  attempts: number;
+  //   uploaded_at: string | null;
+  //   registered_at: string | null;
+};
+
+export type QueuedVisit = {
+  uuid: string;
+  request: VisitRequest; // parsed from the frozen request_json
+  project_id: number;
+  site_id: number;
+  form_definition: unknown;
+  display_snapshot: unknown;
+  status: QueuedVisitStatus;
+  last_error: string | null;
+  attempts: number;
+  visit_created_at: string | null;
+  //   created_at: string;
+  //   updated_at: string;
+  photos: QueuedPhoto[];
+};
+
+type VisitRow = {
+  uuid: string;
+  request_json: string;
+  project_id: number;
+  site_id: number;
+  form_definition: string;
+  display_snapshot: string;
+  status: QueuedVisitStatus;
+  last_error: string | null;
+  attempts: number;
+  visit_created_at: string | null;
+  //   created_at: string; updated_at: string;
+};
+
+const PHOTO_COLUMNS = `client_photo_id, local_path, content_type, size_bytes, status,
+  upload_key, last_error, attempts`;
+
 /** Checks one delivery row against the saved supply catalogue. Throws EnqueueError. */
 function validateDelivery(
   row: { item: number | null; quantity: string | number | null },
@@ -65,10 +111,10 @@ export async function enqueueDraft(
       uuid: string;
       recorded_at: string;
       data: string;
-      created_at: string;
-      updated_at: string;
+      //   created_at: string;
+      //   updated_at: string;
     }>(
-      `SELECT uuid, recorded_at, data, created_at, updated_at
+      `SELECT uuid, recorded_at, data
        FROM drafts WHERE worker_id = ? AND uuid = ?`,
       [workerId, draftUuid],
     );
@@ -164,12 +210,12 @@ export async function enqueueDraft(
     };
 
     // 5. Insert the visit, its photos, and remove the draft: all or nothing.
-    const now = new Date().toISOString();
+    // const now = new Date().toISOString();
     await txn.runAsync(
       `INSERT INTO queued_visits
        (worker_id, uuid, request_json, project_id, site_id, form_definition,
-        display_snapshot, status, attempts, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, 'queued', 0, ?, ?)`,
+        display_snapshot, status, attempts)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'queued', 0)`,
       [
         workerId,
         row.uuid,
@@ -178,8 +224,8 @@ export async function enqueueDraft(
         data.site_id,
         formRow ? formRow.data : "null",
         JSON.stringify(display),
-        now,
-        now,
+        // now,
+        // now,
       ],
     );
     for (const p of photos) {
@@ -207,4 +253,175 @@ export async function enqueueDraft(
 
   if (!result) throw new EnqueueError("Enqueue did not complete");
   return result;
+}
+
+function toVisit(row: VisitRow, photos: QueuedPhoto[]): QueuedVisit {
+  return {
+    uuid: row.uuid,
+    request: JSON.parse(row.request_json) as VisitRequest,
+    project_id: row.project_id,
+    site_id: row.site_id,
+    form_definition: JSON.parse(row.form_definition),
+    display_snapshot: JSON.parse(row.display_snapshot),
+    status: row.status,
+    last_error: row.last_error,
+    attempts: row.attempts,
+    visit_created_at: row.visit_created_at,
+    // created_at: row.created_at,
+    // updated_at: row.updated_at,
+    photos,
+  };
+}
+
+export async function loadQueuedVisit(
+  db: Db,
+  workerId: string,
+  uuid: string,
+): Promise<QueuedVisit | null> {
+  const row = await db.getFirstAsync<VisitRow>(
+    "SELECT * FROM queued_visits WHERE worker_id = ? AND uuid = ?",
+    [workerId, uuid],
+  );
+  if (!row) return null;
+  const photos = await db.getAllAsync<QueuedPhoto>(
+    `SELECT ${PHOTO_COLUMNS} FROM queued_photos
+     WHERE worker_id = ? AND visit_uuid = ? ORDER BY rowid`,
+    [workerId, uuid],
+  );
+  return toVisit(row, photos);
+}
+
+/** Oldest first, so the sender works through them in the order they were recorded. */
+export async function listQueuedVisits(
+  db: Db,
+  workerId: string,
+  status?: QueuedVisitStatus,
+): Promise<QueuedVisit[]> {
+  const rows = status
+    ? await db.getAllAsync<{ uuid: string }>(
+        "SELECT uuid FROM queued_visits WHERE worker_id = ? AND status = ? ORDER BY rowid",
+        [workerId, status],
+      )
+    : await db.getAllAsync<{ uuid: string }>(
+        "SELECT uuid FROM queued_visits WHERE worker_id = ? ORDER BY rowid",
+        [workerId],
+      );
+  const out: QueuedVisit[] = [];
+  for (const r of rows) {
+    const v = await loadQueuedVisit(db, workerId, r.uuid);
+    if (v) out.push(v);
+  }
+  return out;
+}
+
+/** Sets the visit status, optionally recording an error. Each call counts as one attempt when status is 'sending'. */
+export async function updateVisitStatus(
+  db: Db,
+  workerId: string,
+  uuid: string,
+  status: Exclude<QueuedVisitStatus, "sent">,
+  lastError: string | null = null,
+): Promise<void> {
+  const result = await db.runAsync(
+    `UPDATE queued_visits
+     SET status = ?, last_error = ?,
+         attempts = attempts + CASE WHEN ? = 'sending' THEN 1 ELSE 0 END
+        
+     WHERE worker_id = ? AND uuid = ?`,
+    [lastError, new Date().toISOString(), workerId, uuid],
+  );
+  if (result.changes === 0) throw new Error("Visit not found or already sent");
+}
+
+/** Step finished: the server confirmed POST /api/submissions/. Does NOT make the visit 'sent'. */
+export async function markVisitCreated(
+  db: Db,
+  workerId: string,
+  uuid: string,
+): Promise<void> {
+  await db.withExclusiveTransactionAsync(async (txn) => {
+    const now = new Date().toISOString();
+    await txn.runAsync(
+      `UPDATE queued_visits
+       SET visit_created_at = COALESCE(visit_created_at, ?)
+       WHERE worker_id = ? AND uuid = ?`,
+      [now, workerId, uuid],
+    );
+    await settleVisit(txn, workerId, uuid);
+  });
+}
+
+/** Step finished: the photo's bytes were uploaded and we hold its storage key. */
+export async function markPhotoUploaded(
+  db: Db,
+  workerId: string,
+  visitUuid: string,
+  clientPhotoId: string,
+  uploadKey: string,
+): Promise<void> {
+  await db.runAsync(
+    `UPDATE queued_photos
+     SET status = 'uploaded', upload_key = ?, last_error = NULL
+     WHERE worker_id = ? AND visit_uuid = ? AND client_photo_id = ?
+       AND status IN ('pending','failed')`,
+    [uploadKey, workerId, visitUuid, clientPhotoId],
+  );
+}
+
+/** Step finished: POST /api/photos/ acknowledged this client_photo_id. May complete the visit. */
+export async function markPhotoRegistered(
+  db: Db,
+  workerId: string,
+  visitUuid: string,
+  clientPhotoId: string,
+): Promise<void> {
+  await db.withExclusiveTransactionAsync(async (txn) => {
+    await txn.runAsync(
+      `UPDATE queued_photos
+       SET status = 'registered', registered_at = ?, last_error = NULL
+       WHERE worker_id = ? AND visit_uuid = ? AND client_photo_id = ?`,
+      [workerId, visitUuid, clientPhotoId],
+    );
+    await settleVisit(txn, workerId, visitUuid);
+  });
+}
+
+export async function markPhotoFailed(
+  db: Db,
+  workerId: string,
+  visitUuid: string,
+  clientPhotoId: string,
+  error: string,
+): Promise<void> {
+  await db.runAsync(
+    `UPDATE queued_photos
+     SET status = CASE WHEN status = 'registered' THEN status ELSE 'failed' END,
+         last_error = ?, attempts = attempts + 1
+     WHERE worker_id = ? AND visit_uuid = ? AND client_photo_id = ?`,
+    [error, workerId, visitUuid, clientPhotoId],
+  );
+}
+
+/** Marks the visit 'sent' only when creation is confirmed AND every photo is registered. */
+async function settleVisit(
+  txn: Pick<Db, "getFirstAsync" | "runAsync">,
+  workerId: string,
+  uuid: string,
+): Promise<void> {
+  const visit = await txn.getFirstAsync<{ visit_created_at: string | null }>(
+    "SELECT visit_created_at FROM queued_visits WHERE worker_id = ? AND uuid = ?",
+    [workerId, uuid],
+  );
+  if (!visit?.visit_created_at) return;
+  const pending = await txn.getFirstAsync(
+    `SELECT 1 FROM queued_photos
+     WHERE worker_id = ? AND visit_uuid = ? AND status != 'registered' LIMIT 1`,
+    [workerId, uuid],
+  );
+  if (pending) return;
+  await txn.runAsync(
+    `UPDATE queued_visits SET status = 'sent', last_error = NULL
+     WHERE worker_id = ? AND uuid = ?`,
+    [workerId, uuid],
+  );
 }
