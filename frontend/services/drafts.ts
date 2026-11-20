@@ -20,8 +20,8 @@ export type Draft = {
   recorded_at: string;
   data: DraftData;
   photos: DraftPhoto[];
-  created_at: string;
-  updated_at: string;
+  //   created_at: string;
+  //   updated_at: string;
 };
 
 /** RFC 4122 v4 UUID. Swap for expo-crypto's randomUUID() if the project already has it. */
@@ -43,8 +43,8 @@ export async function createDraft(
   const uuid = newUuid();
   const now = new Date().toISOString();
   await db.runAsync(
-    `INSERT INTO drafts (worker_id, uuid, recorded_at, project_id, site_id, data, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO drafts (worker_id, uuid, recorded_at, project_id, site_id, data)
+     VALUES (?, ?, ?, ?, ?, ?)`,
     [
       workerId,
       uuid,
@@ -61,8 +61,8 @@ export async function createDraft(
     recorded_at: now,
     data: initial,
     photos: [],
-    created_at: now,
-    updated_at: now,
+    // created_at: now,
+    // updated_at: now,
   };
 }
 
@@ -70,8 +70,8 @@ type DraftRow = {
   uuid: string;
   recorded_at: string;
   data: string;
-  created_at: string;
-  updated_at: string;
+  //   created_at: string;
+  //   updated_at: string;
 };
 
 export async function loadDraft(
@@ -80,7 +80,7 @@ export async function loadDraft(
   uuid: string,
 ): Promise<Draft | null> {
   const row = await db.getFirstAsync<DraftRow>(
-    `SELECT uuid, recorded_at, data, created_at, updated_at
+    `SELECT uuid, recorded_at, data
      FROM drafts WHERE worker_id = ? AND uuid = ?`,
     [workerId, uuid],
   );
@@ -96,7 +96,7 @@ export async function loadDraft(
 
 export async function listDrafts(db: Db, workerId: string): Promise<Draft[]> {
   const rows = await db.getAllAsync<{ uuid: string }>(
-    "SELECT uuid FROM drafts WHERE worker_id = ? ORDER BY updated_at DESC",
+    "SELECT uuid FROM drafts WHERE worker_id = ? ORDER BY rowid DESC",
     [workerId],
   );
   const out: Draft[] = [];
@@ -108,7 +108,7 @@ export async function listDrafts(db: Db, workerId: string): Promise<Draft[]> {
 }
 
 /**
- * Saves edits. Only data, project_id, site_id and updated_at change;
+ * Saves edits. Only data, project_id, site_id change;
  * uuid and recorded_at are never in the UPDATE. Returns false if the draft
  * no longer exists (for example it was already queued).
  */
@@ -119,7 +119,7 @@ export async function saveDraft(
   data: DraftData,
 ): Promise<boolean> {
   const result = await db.runAsync(
-    `UPDATE drafts SET data = ?, project_id = ?, site_id = ?, updated_at = ?
+    `UPDATE drafts SET data = ?, project_id = ?, site_id = ?
      WHERE worker_id = ? AND uuid = ?`,
     [
       JSON.stringify(data),
@@ -158,10 +158,10 @@ export async function addDraftPhoto(
         photo.size_bytes,
       ],
     );
-    await txn.runAsync(
-      "UPDATE drafts SET updated_at = ? WHERE worker_id = ? AND uuid = ?",
-      [new Date().toISOString(), workerId, draftUuid],
-    );
+    // await txn.runAsync(
+    //   "UPDATE drafts SET updated_at = ? WHERE worker_id = ? AND uuid = ?",
+    //   [new Date().toISOString(), workerId, draftUuid],
+    // );
   });
 }
 
