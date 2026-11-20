@@ -9,3 +9,10 @@ export async function postSubmission(body: SubmissionBody) {
   });
   return readJson<unknown>(response);
 }
+
+export async function getSubmissions() {
+  const response: Response = await apiFetch("/api/submissions/", {
+    method: "GET",
+  });
+  return readJson<unknown>(response);
+}

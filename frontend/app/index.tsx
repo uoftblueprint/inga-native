@@ -3,6 +3,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View, Button} from "rea
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import PhotoPicker from "@/components/PhotoPicker";
+import SavedVisits from "@/components/SavedVisits";
 import { useRouter } from "expo-router";
 
 import { apiFetch, clearSession, getHealth } from "@/services/api";
@@ -66,6 +67,8 @@ export default function HomeScreen() {
         <PhotoPicker />
 
         <Button title="Open projects" onPress={() => router.push("/projects")} />
+
+        <SavedVisits />
 
         <Pressable onPress={handleLogout}>
           <Text>Log out</Text>
