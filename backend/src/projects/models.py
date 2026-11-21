@@ -132,7 +132,6 @@ UNIT_DEFINITIONS = {
     "saplings": ("Saplings", QuantityKind.COUNT),
     "kg": ("Kilograms", QuantityKind.MEASURE),
     "g": ("Grams", QuantityKind.MEASURE),
-    "lb": ("Pounds", QuantityKind.MEASURE),
 }
 UNIT_CHOICES = [(code, label) for code, (label, _) in UNIT_DEFINITIONS.items()]
 

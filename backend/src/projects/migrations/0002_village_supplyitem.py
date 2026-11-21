@@ -21,7 +21,7 @@ class Migration(migrations.Migration):
                 ('active', models.BooleanField(default=True)),
                 ('name', models.CharField(max_length=200)),
                 ('category', models.CharField(choices=[('seed', 'Seeds'), ('seedling', 'Seedlings'), ('sapling', 'Saplings'), ('other', 'Other')], max_length=20)),
-                ('unit', models.CharField(choices=[('seeds', 'Seeds'), ('seedlings', 'Seedlings'), ('saplings', 'Saplings'), ('kg', 'Kilograms'), ('g', 'Grams'), ('lb', 'Pounds')], max_length=20)),
+                ('unit', models.CharField(choices=[('seeds', 'Seeds'), ('seedlings', 'Seedlings'), ('saplings', 'Saplings'), ('kg', 'Kilograms'), ('g', 'Grams')], max_length=20)),
             ],
             options={
                 'constraints': [models.UniqueConstraint(django.db.models.functions.text.Lower('name'), name='unique_supply_item_name_ci')],
