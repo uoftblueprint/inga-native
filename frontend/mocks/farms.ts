@@ -1,4 +1,4 @@
-import type { Project, Region, Site, Village } from "frontend/types/form";
+import type { Project, Region, Site, Village } from "@/types/form";
 
 /**
  * Sample programmes, regions, villages and farms for testing the farm search screen
@@ -45,10 +45,10 @@ function farm(
   return {
     id: nextSiteId++,
     project: project.id,
-    region: Region,
-    village: Village | null,
-    name: string,
-    address: string,
+    region: region,
+    village: village | null,
+    name: name,
+    address: address,
     description: "",
   };
 }
@@ -178,7 +178,7 @@ const HIGHLAND_FARMS: Site[] = [
 
 
 export const MOCK_SITES: Site[] = [
-  ...NORTH_COAST_FARMS, # The ... takes the farms out of each list and puts them into the new one
+  ...NORTH_COAST_FARMS, // The ... takes the farms out of each list and puts them into the new one
   ...HIGHLAND_FARMS
 ];
 
@@ -186,6 +186,5 @@ export const MOCK_SITES: Site[] = [
 export function mockSitesFor(projectId: number): Site[] {
   return MOCK_SITES
   .filter((site) => site.project === projectId)    // keep only this programme's farms
-  .sort((a, b) => a.name.localeCompare(b.name))     // A to Z by name, like the real API
-  );
+  .sort((a, b) => a.name.localeCompare(b.name));     // A to Z by name, like the real API
 }
