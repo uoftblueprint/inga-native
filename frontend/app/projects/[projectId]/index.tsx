@@ -112,7 +112,11 @@ export default function SitePicker() {
       <Pressable
         style={[styles.continue, selectedId === null && styles.continueDisabled]}
         disabled={selectedId === null}
-        onPress={() => router.push(`/projects/${id}/sites/${selectedId}`)}
+        onPress={() => {
+            if (selectedId !== null) {
+                router.push(`/projects/${id}/sites/${selectedId}`);
+            }
+        }}
       >
         <Text style={styles.continueText}>Continue</Text>
       </Pressable>

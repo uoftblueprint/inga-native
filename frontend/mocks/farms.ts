@@ -46,7 +46,7 @@ function farm(
     id: nextSiteId++,
     project: project.id,
     region: region,
-    village: village | null,
+    village: village,
     name: name,
     address: address,
     description: "",

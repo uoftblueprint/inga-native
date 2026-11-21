@@ -1,5 +1,4 @@
-import type { Site } from "frontend/types/form";
-
+import type { Site } from "@/types/form";
 /**
  * searching rules:
  *  - capitals don't matter
