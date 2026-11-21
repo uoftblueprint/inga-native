@@ -13,17 +13,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useProject, useSites } from "@/hooks/useForm";
 import { searchSites } from "@/lib/searchSites";
 import { FarmCard } from "@/components/FarmCard";
-import { ApiError } from "@/services/http";
-
-// Turns a loading error into a message that says what went wrong and what to do.
-function loadErrorMessage(error: unknown): string {
-  if (error instanceof ApiErr
-    // The server answered, but with an error: not the worker's connection
-    return `The server couldn't send the farm list (error ${error.status}). Try again later. If it keeps happening, tell your coordinator.`;
-  }
-  // The request never reached the server
-  return "No internet connection. Connect to the internet, then try again.";
-}
+import { loadErrorMessage } from "@/lib/loadErrorMessage";
 
 // "Select a farm" screen: search one programme's farms and pick one to visit.
 export default function SitePicker() {
@@ -64,7 +54,7 @@ export default function SitePicker() {
     return (
       <View style={styles.center}>
         <Text style={styles.errorTitle}>Couldn&apos;t load farms</Text>
-        <Text style={styles.message}>{loadErrorMessage(error)}</Text>
+        <Text style={styles.message}>{loadErrorMessage(error, "farm list")}</Text>
         <Button title="Try again" onPress={refetch} />
       </View>
     );
