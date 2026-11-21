@@ -132,7 +132,7 @@ class Command(BaseCommand):
                 defaults={"first_name": first_name, "last_name": last_name},
             )
             if created:
-                user.set_unusable_password()
+                user.set_password("pw123")
                 user.save(update_fields=["password"])
 
         for site_name, username, metadata in SUBMISSIONS:
