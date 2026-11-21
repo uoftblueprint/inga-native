@@ -1,4 +1,4 @@
-// import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 // import { fetchProjects, fetchSites } from "@/services/projects";
 // import type { Project, Site } from "@/types/form";
 import {
@@ -11,19 +11,20 @@ import {
 function useLoad<T>(load: () => Promise<T>, deps: unknown[]) {
   const [data, setData] = useState<T | undefined>(undefined);
   const [isPending, setPending] = useState(true);
-  const [isError, setError] = useState(false);
+  // The error itself (not just true/false), so a screen can say what went wrong
+  const [error, setError] = useState<unknown>(null);
   const [tick, setTick] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
     setPending(true);
-    setError(false);
+    setError(null);
     load()
       .then((d) => {
         if (!cancelled) setData(d);
       })
-      .catch(() => {
-        if (!cancelled) setError(true);
+      .catch((e: unknown) => {
+        if (!cancelled) setError(e);
       })
       .finally(() => {
         if (!cancelled) setPending(false);
@@ -34,7 +35,8 @@ function useLoad<T>(load: () => Promise<T>, deps: unknown[]) {
   }, [...deps, tick]);
 
   const refetch = useCallback(() => setTick((t) => t + 1), []);
-  return { data, isPending, isError, refetch };
+  // isError stays for screens that only need yes/no
+  return { data, isPending, isError: error !== null, error, refetch };
 }
 // `data` stays a plain list and existing screens don't change
 export function useProjects() {
