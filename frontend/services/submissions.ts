@@ -14,5 +14,5 @@ export async function getSubmissions() {
   const response: Response = await apiFetch("/api/submissions/", {
     method: "GET",
   });
-  return readJson<unknown>(response);
+  return readJson<SubmissionBody[]>(response);
 }
