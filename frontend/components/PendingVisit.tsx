@@ -1,12 +1,12 @@
 import {StyleSheet, Text, View} from "react-native";
 import {QueuedVisit} from "@/services/queue";
-import {SubmissionBody} from "@/types/form";
 
-export default function VisitCard({ item } : {item: SubmissionBody}) {
+export default function PendingVisit({ item } : {item: QueuedVisit}) {
+
   return <View style={styles.container}>
-    <Text style={styles.siteHeading}>Site #{item.site}</Text>
+    <Text style={styles.siteHeading}>Site #{item.request.site}</Text>
 
-    {Object.entries(item.metadata).map(([key, value]) => (
+    {Object.entries(item.request.metadata).map(([key, value]) => (
       <View key={key} style={styles.metadata}>
         <Text><Text style={styles.label}>{key}</Text>: {String(value)}</Text>
       </View>
@@ -16,8 +16,6 @@ export default function VisitCard({ item } : {item: SubmissionBody}) {
 
 const styles = StyleSheet.create({
   container: {
-    // borderColor: "red",
-    // borderWidth: 1,
     paddingVertical: 16,
   },
   siteHeading: {
