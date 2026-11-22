@@ -1,4 +1,7 @@
-"""Model tests for Village, Site.village and SupplyItem (issue #27)."""
+"""Model tests for Village, Site.village and SupplyItem (issue #27).
+
+Fixtures (regions, project, count_item, measure_item) live in conftest.py.
+"""
 from decimal import Decimal
 
 import pytest
@@ -15,29 +18,6 @@ from projects.models import (
     SupplyItem,
     Village,
 )
-
-
-@pytest.fixture
-def regions(db):
-    return (
-        Region.objects.create(name="Atlántida"),
-        Region.objects.create(name="Yoro"),
-    )
-
-
-@pytest.fixture
-def project(db):
-    return Project.objects.create(name="Inga Alley Cropping")
-
-
-@pytest.fixture
-def count_item(db):
-    return SupplyItem.objects.create(name="Inga seedlings", category="seedling", unit="seedlings")
-
-
-@pytest.fixture
-def measure_item(db):
-    return SupplyItem.objects.create(name="Compost", category="other", unit="kg")
 
 
 # Village uniqueness
