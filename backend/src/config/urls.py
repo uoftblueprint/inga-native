@@ -17,10 +17,13 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 
+from projects.views import SiteView
+
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", include("api.urls")),
     path("api/accounts/", include("accounts.urls")),
+    path("api/site/<int:site_id>/", SiteView.as_view(), name="site-detail"),
     path("api/projects/", include("projects.urls")),
     path("api/submissions/", include("submissions.urls")),
     path("api/photos/", include("photos.urls")),

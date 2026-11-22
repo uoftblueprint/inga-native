@@ -1,4 +1,4 @@
-from rest_framework.generics import ListAPIView
+from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.permissions import IsAuthenticated
 
 from projects.models import Project, Site
@@ -31,3 +31,12 @@ class ProjectSiteListView(ListAPIView):  # this returns farms
             .order_by("name")
         )
 
+class SiteView(RetrieveAPIView):
+    """GET /api/site/<site_id> : retrieves a site by id (url listed in config.py)"""
+    serializer_class = SiteSerializer
+    permission_classes = [IsAuthenticated]
+    lookup_field = "pk"            # model field to filter on
+    lookup_url_kwarg = "site_id"   # URL kwarg to read the value from
+
+    def get_queryset(self):
+        return Site.objects.filter(active=True)
