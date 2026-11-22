@@ -1,3 +1,5 @@
+import type { LogSchema } from "@/types/form";
+
 export type DraftDelivery = {
   item: number | null;
   quantity: string | number | null;
@@ -8,7 +10,7 @@ export type DraftData = {
   site_id?: number | null;
   deliveries?: DraftDelivery[];
   metadata?: Record<string, unknown>;
-  form_definition?: Record<string, "numerical" | "boolean" | "text">;
+  form_definition?: LogSchema;
   supply_snapshot?: Record<
     string,
     {

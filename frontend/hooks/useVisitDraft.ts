@@ -13,14 +13,6 @@ import type { DeliveryRow } from "@/lib/deliveries";
 import type { Draft, DraftData, DraftPhoto } from "@/types/drafts";
 import type { LogSchema } from "@/types/form";
 
-type AppDraftState = {
-  form_definition: LogSchema;
-  supply_snapshot: Record<
-    string,
-    { name: string; unit: string; quantity_kind: "count" | "measure" }
-  >;
-};
-
 export function useVisitDraft(
   projectId: number,
   siteId: number,
@@ -74,16 +66,20 @@ export function useVisitDraft(
         const db = await getDb();
         const sqliteWorkerId = String(workerId);
         const liveItems = await loadSupplyItems(db, sqliteWorkerId);
-        const savedDraft =
+        const storedDraft =
           (await listDrafts(db, sqliteWorkerId)).find(
             (item) =>
               item.data.project_id === projectId &&
               item.data.site_id === siteId,
           ) ?? null;
-        const savedState =
-          savedDraft?.data as unknown as Partial<AppDraftState> | undefined;
-        const schema = savedState?.form_definition ?? liveSchema;
-        const snapshot = savedState?.supply_snapshot;
+        const savedDraft: Draft | null = storedDraft
+          ? {
+              ...storedDraft,
+              data: storedDraft.data as DraftData,
+            }
+          : null;
+        const schema = savedDraft?.data.form_definition ?? liveSchema;
+        const snapshot = savedDraft?.data.supply_snapshot;
 
         const itemMap = new Map<number, SupplyItem>();
         for (const item of liveItems.length ? liveItems : SUPPLY_ITEMS) {
@@ -133,17 +129,16 @@ export function useVisitDraft(
               },
             ]),
           );
-          const created = await createDraft(db, sqliteWorkerId, {
+          const initialData: DraftData = {
             project_id: projectId,
             site_id: siteId,
             deliveries: [{ item: null, quantity: null }],
             metadata: {},
-            ...{
-              form_definition: schema,
-              supply_snapshot: supplySnapshot,
-            },
-          } as DraftData);
-          if (!cancelled) setDraft(created);
+            form_definition: schema,
+            supply_snapshot: supplySnapshot,
+          };
+          const created = await createDraft(db, sqliteWorkerId, initialData);
+          if (!cancelled) setDraft({ ...created, data: initialData });
         }
         if (!cancelled) setReady(true);
       } catch (error) {
@@ -168,7 +163,7 @@ export function useVisitDraft(
       try {
         const db = await getDb();
         if (!cancelled) {
-          await saveDraft(db, String(workerId), draft.uuid, {
+          const saved = await saveDraft(db, String(workerId), draft.uuid, {
             ...draft.data,
             project_id: projectId,
             site_id: siteId,
@@ -178,9 +173,16 @@ export function useVisitDraft(
             })),
             metadata: values,
           });
+          if (!saved) setBanner("Could not save this unfinished visit.");
         }
-      } catch {
-        // Keep editable state if autosave fails.
+      } catch (error) {
+        if (!cancelled) {
+          setBanner(
+            error instanceof Error
+              ? `Could not save this unfinished visit: ${error.message}`
+              : "Could not save this unfinished visit.",
+          );
+        }
       } finally {
         saving.current = false;
       }
@@ -191,9 +193,7 @@ export function useVisitDraft(
     };
   }, [ready, draft, workerId, projectId, siteId, deliveries, values]);
 
-  const schema =
-    ((draft?.data as unknown as Partial<AppDraftState>)?.form_definition ??
-      liveSchema) as LogSchema;
+  const schema = draft?.data.form_definition ?? liveSchema;
 
   function addDelivery() {
     setDeliveries((rows) => [...rows, { item: null, quantity: "" }]);
@@ -227,7 +227,7 @@ export function useVisitDraft(
   ) {
     if (!draft || !workerId) throw new Error("Draft not ready.");
     const db = await getDb();
-    await saveDraft(db, String(workerId), draft.uuid, {
+    const data: DraftData = {
       ...draft.data,
       project_id: projectId,
       site_id: siteId,
@@ -244,7 +244,9 @@ export function useVisitDraft(
           },
         ]),
       ),
-    } as DraftData);
+    };
+    const saved = await saveDraft(db, String(workerId), draft.uuid, data);
+    if (!saved) throw new Error("The unfinished visit no longer exists.");
   }
 
   return {
