@@ -3,9 +3,11 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View, Button} from "rea
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import PhotoPicker from "@/components/PhotoPicker";
+import SavedVisits from "@/components/SavedVisits";
 import { useRouter } from "expo-router";
 
 import { apiFetch, clearSession, getHealth } from "@/services/api";
+import Separator from "@/components/Separator";
 
 type ConnectionState = "loading" | "connected" | "error";
 
@@ -69,9 +71,10 @@ export default function HomeScreen() {
 
         {
           state === "connected"
-            ? <Button title="Saved visits" onPress={() => router.push("/saved-visits")}/>
+            ? <SavedVisits username={username}/>
             : <Text>Saved visits unavailable.</Text>
         }
+
         <Pressable onPress={handleLogout}>
           <Text>Log out</Text>
         </Pressable>
@@ -88,7 +91,7 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "flex-start",
     gap: 12,
     padding: 24,
   },
