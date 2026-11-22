@@ -3,7 +3,7 @@ import {QueuedVisit} from "@/services/queue";
 import {SubmissionBody} from "@/types/form";
 
 export default function VisitCard({ item } : {item: SubmissionBody}) {
-  return <View style={styles.item}>
+  return <View style={styles.container}>
     <Text style={styles.siteHeading}>Site #{item.site}</Text>
 
     {Object.entries(item.metadata).map(([key, value]) => (
@@ -15,12 +15,14 @@ export default function VisitCard({ item } : {item: SubmissionBody}) {
 }
 
 const styles = StyleSheet.create({
+  container: {
+    // borderColor: "red",
+    // borderWidth: 1,
+    paddingVertical: 16,
+  },
   siteHeading: {
     fontSize: 18,
     fontWeight: "600",
-  },
-  item: {
-    paddingVertical: 16,
   },
   metadata: {
     flexDirection: "row",

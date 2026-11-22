@@ -33,7 +33,6 @@ export default function SavedVisits({ username }: { username: string | null }) {
   useEffect(() => {
     loadQueued();
     loadCompleted();
-    // TODO: reload on screen change
   }, [loadQueued, loadCompleted]);
 
   return (
@@ -49,6 +48,8 @@ export default function SavedVisits({ username }: { username: string | null }) {
         )}
         ItemSeparatorComponent={() => (<Separator />)}
         ListEmptyComponent={<Text>No saved visits yet.</Text>}
+        showsVerticalScrollIndicator={true}
+        indicatorStyle="black"
       />
     </View>
   );
@@ -57,6 +58,8 @@ export default function SavedVisits({ username }: { username: string | null }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ddd",
   },
   title: {
     fontSize: 24,
