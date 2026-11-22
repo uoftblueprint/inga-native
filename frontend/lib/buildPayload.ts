@@ -2,7 +2,7 @@ import type { FieldValue, LogSchema } from "@/types/form";
 
 export function buildPayload(
   schema: LogSchema,
-  values: Record<string, string | boolean>
+  values: Record<string, string | boolean | null | undefined>
 ) {
   const metadata: Record<string, FieldValue> = {};
   const invalid: Record<string, string> = {};
@@ -11,7 +11,7 @@ export function buildPayload(
     const raw = values[key];
 
     if (type === "boolean") {
-      metadata[key] = raw === true;
+      if (raw === true || raw === false) metadata[key] = raw;
       continue;
     }
 
