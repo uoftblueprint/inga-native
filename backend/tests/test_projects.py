@@ -3,6 +3,8 @@ from rest_framework.test import APIClient
 from projects.models import Project, Region, Site
 from io import StringIO
 from django.core.management import call_command
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
 
 
 @pytest.mark.django_db
@@ -32,13 +34,16 @@ def test_get_sites_returns_sites_with_region(auth_client, test_data):
 
 
 @pytest.mark.django_db
-def test_sites_avoids_n_plus_one_queries(auth_client, test_data, django_assert_num_queries):
+def test_sites_avoids_n_plus_one_queries(auth_client, test_data):
     """Verifies that select_related('region') runs only 1 query for sites."""
     project_id = test_data["active"].id
 
-    with django_assert_num_queries(1):
+    with CaptureQueriesContext(connection) as captured:
         res = auth_client.get(f"/api/projects/{project_id}/sites/")
         assert res.status_code == 200
+    # ATOMIC_REQUESTS also emits savepoint statements inside pytest's transaction.
+    selects = [query for query in captured if query["sql"].lstrip().upper().startswith("SELECT")]
+    assert len(selects) == 1
 
 
 @pytest.mark.django_db
