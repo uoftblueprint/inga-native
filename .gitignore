@@ -27,3 +27,7 @@ db.sqlite3
 .idea/
 
 *.egg-info/
+
+# Local review artifacts
+/docs/reviews/
+/docs/legacy-inga-comparison.md

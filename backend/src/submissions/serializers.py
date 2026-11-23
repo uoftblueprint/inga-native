@@ -1,13 +1,19 @@
 from rest_framework import serializers
+from rest_framework.validators import UniqueValidator
 
 from .models import Submission
 
 
 class SubmissionSerializer(serializers.ModelSerializer):
+    uuid = serializers.UUIDField(
+        required=False,
+        validators=[UniqueValidator(queryset=Submission.objects.all())],
+    )
+
     class Meta:
         model = Submission
-        fields = ["id", "site", "uuid", "metadata", "created_at"]
-        read_only_fields = ["id", "created_at"]
+        fields = ["site", "uuid", "metadata", "created_at"]
+        read_only_fields = ["created_at"]
 
     def validate(self, attrs):
         metadata = attrs["metadata"]
