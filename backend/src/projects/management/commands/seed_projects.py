@@ -1,6 +1,6 @@
 from decimal import Decimal
 from django.core.management.base import BaseCommand
-from projects.models import Project, Region, Site
+from projects.models import Project, Region, Site, SupplyItem, Village
 
 """
 just random data
@@ -26,6 +26,23 @@ REGIONS = {
     "Copán": ("14.766700", "-88.783300"),  # Santa Rosa de Copán
 }
 
+# Villages inside each region. A farm can optionally be linked to one.
+VILLAGES = {
+    "Atlántida": ["El Naranjo", "La Esperanza"],
+    "Yoro": ["San Isidro"],
+}
+
+# (name, category, unit, active). quantity_kind comes from the unit.
+SUPPLY_ITEMS = [
+    ("Inga seeds", "seed", "seeds", True),
+    ("Inga seedlings", "seedling", "seedlings", True),
+    ("Citrus seeds", "seed", "seeds", True),
+    ("Citrus saplings", "sapling", "saplings", True),
+    ("Compost", "other", "kg", True),
+    # Inactive on purpose: it must NOT appear in GET /api/supply-items/.
+    ("Cacao seedlings (old stock)", "seedling", "seedlings", False),
+]
+
 PROJECTS = [
     {
         "name": "Inga Alley Cropping – North Coast",
@@ -38,12 +55,12 @@ PROJECTS = [
             "Notes": "text",
         },
         "sites": [
-            # (name, region, address w/ municipality, description)
-            ("Finca El Naranjo", "Atlántida", "Aldea El Naranjo, La Ceiba",
+            # (name, region, village or None, address w/ municipality, description)
+            ("Finca El Naranjo", "Atlántida", "El Naranjo", "Aldea El Naranjo, La Ceiba",
              "Steep plot above the river; access by footpath in rainy season."),
-            ("Finca La Esperanza", "Atlántida", "Aldea La Esperanza, Tela", "New planting this season."),
-            ("Finca San Isidro", "Yoro", "Aldea San Isidro, Olanchito", "Former cattle pasture being restored."),
-            ("Finca Las Palmas", "Yoro", "Caserío Las Palmas, Yoro", ""),
+            ("Finca La Esperanza", "Atlántida", "La Esperanza", "Aldea La Esperanza, Tela", "New planting this season."),
+            ("Finca San Isidro", "Yoro", "San Isidro", "Aldea San Isidro, Olanchito", "Former cattle pasture being restored."),
+            ("Finca Las Palmas", "Yoro", None, "Caserío Las Palmas, Yoro", ""),
         ],
     },
     # Inactive on purpose: it must NOT appear in GET /api/projects/.
@@ -53,14 +70,14 @@ PROJECTS = [
         "active": False,
         "log_schema": {},
         "sites": [
-            ("Finca El Encino", "Yoro", "Aldea El Encino, Yoro", ""),
+            ("Finca El Encino", "Yoro", None, "Aldea El Encino, Yoro", ""),
         ],
     },
 ]
 
 
 class Command(BaseCommand):
-    help = "Seeds the database with realistic projects, regions, and farms."
+    help = "Seeds the database with realistic projects, regions, villages, farms and supply items."
 
     def handle(self, *args, **options):
         self.stdout.write("Seeding project data...")
@@ -74,7 +91,20 @@ class Command(BaseCommand):
             )
             regions[reg.name] = reg
 
-        # 2. Projects, and 3. Sites / Farms inside each one
+        # 2. Villages
+        villages = {}
+        for region_name, names in VILLAGES.items():
+            for name in names:
+                village, _ = Village.objects.get_or_create(region=regions[region_name], name=name)
+                villages[(region_name, name)] = village
+
+        # 3. Supply items
+        for name, category, unit, active in SUPPLY_ITEMS:
+            SupplyItem.objects.get_or_create(
+                name=name, defaults={"category": category, "unit": unit, "active": active}
+            )
+
+        # 4. Projects, and 5. Sites / Farms inside each one
         for item in PROJECTS:
             project, _ = Project.objects.get_or_create(
                 name=item["name"],
@@ -85,15 +115,16 @@ class Command(BaseCommand):
                 },
             )
 
-            for name, region, address, description in item["sites"]:
+            for name, region, village, address, description in item["sites"]:
                 Site.objects.get_or_create(
                     project=project,
                     name=name,
                     defaults={
                         "region": regions[region],
+                        "village": villages[(region, village)] if village else None,
                         "address": address,
                         "description": description,
                     },
                 )
 
-        self.stdout.write(self.style.SUCCESS("Done seeding projects, regions, and sites!"))
+        self.stdout.write(self.style.SUCCESS("Done seeding projects, regions, villages, sites and supply items!"))

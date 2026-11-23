@@ -91,3 +91,43 @@ def submission_context():
     region = Region.objects.create(name="Central region")
     site = Site.objects.create(project=project, region=region, name="North farm")
     return user, other_user, site
+
+
+# Fixtures for villages and supply items (issue #27)
+from projects.models import SupplyItem, Village
+
+
+@pytest.fixture
+def regions(db):
+    """Two regions, for testing village/region rules across regions."""
+    return (
+        Region.objects.create(name="Atlántida"),
+        Region.objects.create(name="Yoro"),
+    )
+
+
+@pytest.fixture
+def count_item(db):
+    """A supply item counted in whole numbers."""
+    return SupplyItem.objects.create(name="Inga seedlings", category="seedling", unit="seedlings")
+
+
+@pytest.fixture
+def measure_item(db):
+    """A supply item measured in decimals (kg)."""
+    return SupplyItem.objects.create(name="Compost", category="other", unit="kg")
+
+
+@pytest.fixture
+def village_farms(db):
+    """A programme with one farm in a village and one farm without a village."""
+    region = Region.objects.create(name="Atlántida")
+    village = Village.objects.create(region=region, name="El Naranjo")
+    project = Project.objects.create(name="Inga Alley Cropping")
+    with_village = Site.objects.create(
+        project=project, region=region, village=village,
+        name="Finca El Naranjo", address="Aldea El Naranjo",
+    )
+    without_village = Site.objects.create(project=project, region=region, name="Finca Las Palmas")
+    return {"project": project, "region": region, "village": village,
+            "with_village": with_village, "without_village": without_village}
