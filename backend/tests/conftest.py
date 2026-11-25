@@ -1,4 +1,5 @@
 from decimal import Decimal
+from io import StringIO
 
 import pytest
 from django.contrib.auth import get_user_model
@@ -9,13 +10,22 @@ from projects.models import Project, Region, Site
 
 
 @pytest.fixture
-def auth_client():
+def api_client_for(db):
+    """One mock-auth path; pass distinct workers to test ownership boundaries."""
+    def make_client(user):
+        client = APIClient()
+        client.force_authenticate(user=user)
+        return client
+
+    return make_client
+
+
+@pytest.fixture
+def auth_client(api_client_for):
     user = get_user_model().objects.create_user(
         username="fieldworker", password="password123"
     )
-    client = APIClient()
-    client.force_authenticate(user=user)
-    return client
+    return api_client_for(user)
 
 
 @pytest.fixture
@@ -55,13 +65,12 @@ from django.contrib.auth import get_user_model
 
 
 @pytest.fixture
-def authenticated_client(client, db):
+def authenticated_client(api_client_for):
 	user = get_user_model().objects.create_user(
 		username="pytest-user",
 		password="pytest-password",
 	)
-	client.force_login(user)
-	return client, user
+	return api_client_for(user), user
 try:
     from projects.models import Project, Region, Site
 except ImportError:

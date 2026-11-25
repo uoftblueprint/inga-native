@@ -1,9 +1,15 @@
 from rest_framework import serializers
+from rest_framework.validators import UniqueValidator
 
 from .models import Submission
 
 
 class SubmissionSerializer(serializers.ModelSerializer):
+    uuid = serializers.UUIDField(
+        required=False,
+        validators=[UniqueValidator(queryset=Submission.objects.all())],
+    )
+
     class Meta:
         model = Submission
         fields = ["site", "uuid", "metadata", "created_at"]

@@ -1,4 +1,4 @@
-// eslint-config-expo carries the React and React Native rules for SDK 57.
+// eslint-config-expo carries the React and React Native rules for the installed SDK.
 const { defineConfig } = require("eslint/config");
 const expoConfig = require("eslint-config-expo/flat");
 

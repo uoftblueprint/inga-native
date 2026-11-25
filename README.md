@@ -21,9 +21,9 @@ Database
 - The same TypeScript app targets iOS and Android. Native `ios/` and `android/` projects are generated later with Expo Continuous Native Generation, only when a build needs them.
 - Django is a separate backend application.
 - Django REST Framework exposes the JSON API the mobile app calls.
-- SQLite is the local database for this initial setup.
+- PostgreSQL is the backend database, including local development in Docker.
 
-Expo SDK 57 uses the React Native New Architecture. Do not upgrade React or React Native on their own. Install Expo and React Native packages with `npx expo install` so Expo picks a compatible stable version.
+Expo SDK 58 uses the React Native New Architecture. Do not upgrade React or React Native on their own. Install Expo and React Native packages with `npx expo install` so Expo picks a compatible stable version.
 
 ## Prerequisites
 - Docker Desktop. You will need it to be able to run and test the application.
@@ -216,7 +216,7 @@ docker start <container_id>
 ```bash
 docker exec -it <container_id> pytest
 ```
-You should see that six tests run and pass. 
+The backend test suite should run and pass.
 
 Alternatively, you can run the command below to run the tests without having to find the container id:
 ```bash
@@ -274,3 +274,20 @@ npm run lint
 ```
 
 CI runs both of these, plus the backend tests, on every pull request.
+
+## Development seed data
+
+After migrations, run this from the repository root:
+
+```bash
+docker compose exec backend python src/manage.py seed_demo
+```
+
+This extends `seed_projects` to 100 sample farms, including similar names,
+different regions and missing addresses. Use `--farms 150` for a larger set.
+Once the village and supply models are merged and migrated, the same command
+also adds village links and count/measure supply examples. It works before
+those models exist and does not introduce their schema.
+
+Rerunning retains existing records, custom form definitions, edited addresses,
+chosen villages and retired supplies. Use it for development/demo data.
