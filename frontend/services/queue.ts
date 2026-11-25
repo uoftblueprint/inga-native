@@ -160,9 +160,16 @@ export async function enqueueDraft(
       }),
     );
 
-    const deliveries = (data.deliveries ?? []).map((d) =>
-      validateDelivery(d, items),
-    );
+    const isBlank = (d: {
+      item: number | null;
+      quantity: string | number | null;
+    }) =>
+      d.item == null &&
+      (d.quantity == null || String(d.quantity).trim() === "");
+
+    const deliveries = (data.deliveries ?? [])
+      .filter((d) => !isBlank(d))
+      .map((d) => validateDelivery(d, items));
 
     for (const p of photos) {
       if (!p.content_type || p.size_bytes == null || p.size_bytes <= 0) {
@@ -295,12 +302,16 @@ export async function loadQueuedVisit(
 export async function listQueuedVisits(
   db: Db,
   workerId: string,
-  status?: QueuedVisitStatus,
+  status?: QueuedVisitStatus | QueuedVisitStatus[],
 ): Promise<QueuedVisit[]> {
-  const rows = status
+  const statuses =
+    status === undefined ? null : Array.isArray(status) ? status : [status];
+  const rows = statuses
     ? await db.getAllAsync<{ uuid: string }>(
-        "SELECT uuid FROM queued_visits WHERE worker_id = ? AND status = ? ORDER BY rowid",
-        [workerId, status],
+        `SELECT uuid FROM queued_visits
+         WHERE worker_id = ? AND status IN (${statuses.map(() => "?").join(",")})
+         ORDER BY rowid`,
+        [workerId, ...statuses],
       )
     : await db.getAllAsync<{ uuid: string }>(
         "SELECT uuid FROM queued_visits WHERE worker_id = ? ORDER BY rowid",
@@ -349,6 +360,22 @@ export async function markVisitCreated(
     );
     await settleVisit(txn, workerId, uuid);
   });
+}
+
+// to show the recently used/visited farms (implemented to show 3 for now, exact number to be confirmed)
+export async function recentSiteIds(
+  db: Db,
+  workerId: string,
+  projectId: number,
+  limit = 3, // TODO: confirm the limit
+): Promise<number[]> {
+  const rows = await db.getAllAsync<{ site_id: number }>(
+    `SELECT site_id FROM queued_visits
+     WHERE worker_id = ? AND project_id = ?
+     GROUP BY site_id ORDER BY MAX(rowid) DESC LIMIT ?`,
+    [workerId, projectId, limit],
+  );
+  return rows.map((r) => r.site_id);
 }
 
 /** Step finished: the photo's bytes were uploaded and we hold its storage key. */
