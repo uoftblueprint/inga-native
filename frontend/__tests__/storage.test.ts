@@ -22,6 +22,7 @@ import {
     markPhotoRegistered,
     markPhotoUploaded,
     markVisitCreated,
+    updateVisitStatus,
 } from "@/services/queue";
 import { openTestDb } from "./helpers/sqliteAdapter";
 
@@ -273,5 +274,61 @@ describe("what gets queued", () => {
     await markPhotoUploaded(db, A, draft.uuid, "photo-1", "server-key");
     await markPhotoRegistered(db, A, draft.uuid, "photo-1");
     expect((await loadQueuedVisit(db, A, draft.uuid))?.status).toBe("sent");
+  });
+});
+
+describe("form edge cases", () => {
+  test("fully blank delivery rows are ignored, half-filled rows are rejected", async () => {
+    const db = await open();
+    const draft = await readyDraft(db, A);
+
+    await saveDraft(db, A, draft.uuid, {
+      project_id: 1,
+      site_id: 10,
+      deliveries: [
+        { item: 1, quantity: "2.5" },
+        { item: null, quantity: "" }, // blank row from the form
+      ],
+    });
+    await enqueueDraft(db, A, draft.uuid);
+    const visit = await loadQueuedVisit(db, A, draft.uuid);
+    expect(visit?.request.deliveries).toEqual([{ item: 1, quantity: 2.5 }]);
+  });
+
+  test("a half-filled row is still rejected", async () => {
+    const db = await open();
+    const draft = await readyDraft(db, A);
+
+    await saveDraft(db, A, draft.uuid, {
+      project_id: 1,
+      site_id: 10,
+      deliveries: [{ item: 1, quantity: "" }],
+    });
+    await expect(enqueueDraft(db, A, draft.uuid)).rejects.toBeInstanceOf(
+      EnqueueError,
+    );
+  });
+});
+
+describe("pending and completed lists", () => {
+  test("pending includes queued, sending and failed; completed is sent only", async () => {
+    const db = await open();
+    const a = await readyDraft(db, A);
+    const b = await createDraft(db, A, { project_id: 1, site_id: 10 });
+    const c = await createDraft(db, A, { project_id: 1, site_id: 10 });
+    for (const d of [a, b, c]) await enqueueDraft(db, A, d.uuid);
+
+    await updateVisitStatus(db, A, b.uuid, "failed", "no signal");
+    await markVisitCreated(db, A, c.uuid); // no photos, so it becomes 'sent'
+
+    const pending = await listQueuedVisits(db, A, [
+      "queued",
+      "sending",
+      "failed",
+    ]);
+    const completed = await listQueuedVisits(db, A, "sent");
+
+    expect(pending.map((v) => v.uuid).sort()).toEqual([a.uuid, b.uuid].sort());
+    expect(completed.map((v) => v.uuid)).toEqual([c.uuid]);
   });
 });
