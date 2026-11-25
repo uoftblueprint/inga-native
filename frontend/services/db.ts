@@ -73,8 +73,6 @@ CREATE INDEX idx_sites_project ON sites (worker_id, project_id);
     project_id   INTEGER,
     site_id      INTEGER,
     data         TEXT NOT NULL,   -- deliveries, metadata, anything in progress
-    created_at   TEXT NOT NULL,
-    updated_at   TEXT NOT NULL,
     PRIMARY KEY (worker_id, uuid)
   );
 
@@ -105,8 +103,6 @@ CREATE INDEX idx_sites_project ON sites (worker_id, project_id);
     last_error         TEXT,
     attempts           INTEGER NOT NULL DEFAULT 0,
     visit_created_at   TEXT,           -- set when the server confirms creation
-    created_at         TEXT NOT NULL,
-    updated_at         TEXT NOT NULL,
     PRIMARY KEY (worker_id, uuid)
   );
   CREATE INDEX idx_queued_status ON queued_visits (worker_id, status);
@@ -123,8 +119,6 @@ CREATE INDEX idx_sites_project ON sites (worker_id, project_id);
     upload_key      TEXT,
     last_error      TEXT,
     attempts        INTEGER NOT NULL DEFAULT 0,
-    uploaded_at     TEXT,
-    registered_at   TEXT,
     PRIMARY KEY (worker_id, visit_uuid, client_photo_id),
     FOREIGN KEY (worker_id, visit_uuid)
       REFERENCES queued_visits (worker_id, uuid) ON DELETE CASCADE

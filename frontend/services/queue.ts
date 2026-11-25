@@ -378,7 +378,7 @@ export async function markPhotoRegistered(
   await db.withExclusiveTransactionAsync(async (txn) => {
     await txn.runAsync(
       `UPDATE queued_photos
-       SET status = 'registered', registered_at = ?, last_error = NULL
+       SET status = 'registered', last_error = NULL
        WHERE worker_id = ? AND visit_uuid = ? AND client_photo_id = ?`,
       [workerId, visitUuid, clientPhotoId],
     );

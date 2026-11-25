@@ -44,7 +44,7 @@ export async function createDraft(
   const now = new Date().toISOString();
   await db.runAsync(
     `INSERT INTO drafts (worker_id, uuid, recorded_at, project_id, site_id, data)
-     VALUES (?, ?, ?, ?, ?, ?)`,
+    VALUES (?, ?, ?, ?, ?, ?)`,
     [
       workerId,
       uuid,
@@ -52,8 +52,8 @@ export async function createDraft(
       initial.project_id ?? null,
       initial.site_id ?? null,
       JSON.stringify(initial),
-      now,
-      now,
+      // now,
+      // now,
     ],
   );
   return {
@@ -125,7 +125,6 @@ export async function saveDraft(
       JSON.stringify(data),
       data.project_id ?? null,
       data.site_id ?? null,
-      new Date().toISOString(),
       workerId,
       uuid,
     ],
