@@ -1,37 +1,62 @@
 import {useCallback, useEffect, useState} from 'react';
 import {getSubmissions} from "@/services/submissions";
-import {View, Text, FlatList, StyleSheet} from "react-native";
-import {SubmissionBody} from "@/types/form";
+import {FlatList, StyleSheet, Text, View} from "react-native";
 import {getDb} from "@/services/db";
-import {listQueuedVisits, QueuedVisit} from "@/services/queue";
-import CompletedVisit from "@/components/CompletedVisit";
+import {listQueuedVisits } from "@/services/queue";
+import VisitCard, {VisitCardInfo} from "@/components/VisitCard";
 import Separator from "@/components/Separator";
 import {SegmentedButton, Tab} from "@/components/SegmentedButton";
-import PendingVisit from "./PendingVisit";
+import {getSite} from "@/services/sites";
+import {parseISO} from "date-fns";
+import { toCardInfo } from "@/lib/visitCardInfo";
 
 export default function SavedVisits({ username }: { username: string | null }) {
-  const [pending, setPending] = useState<QueuedVisit[]>([]);
-  const [failed, setFailed] = useState<QueuedVisit[]>([])
-  const [completed, setCompleted] = useState<SubmissionBody[]>([]);
+  const [pending, setPending] = useState<VisitCardInfo[]>([]);
+  const [failed, setFailed] = useState<VisitCardInfo[]>([])
+  const [completed, setCompleted] = useState<VisitCardInfo[]>([]);
   const [tab, setTab] = useState<Tab>("pending");
 
-  const loadQueued = useCallback(async () => {
-    if (username === null) {
-      return [];
-    }
-    const db = await getDb();
-    const workerId = username;
-    const pending = await listQueuedVisits(db, workerId, "queued");
-    const failed = await listQueuedVisits(db, workerId, "failed");
-    setPending(pending);
-    setFailed(failed);
-  }, [username])
+const loadQueued = useCallback(async () => {
+  if (username === null) {
+    setPending([]);
+    setFailed([]);
+    return;
+  }
 
-  const loadCompleted = useCallback(async () => {
-    let res: SubmissionBody[];
-    res = await getSubmissions();
-    setCompleted(res);
-  }, []);
+  const db = await getDb();
+  const [queued, failed] = await Promise.all([
+    listQueuedVisits(db, username, "queued"),
+    listQueuedVisits(db, username, "failed"),
+  ]);
+
+  setPending(queued.map(toCardInfo));
+  setFailed(failed.map(toCardInfo));
+}, [username]);
+
+const loadCompleted = useCallback(async () => {
+  const submissions = await getSubmissions();
+
+  const siteIds = [...new Set(submissions.map((s) => s.site))];
+  const sites = await Promise.all(siteIds.map((id) => getSite(id)));
+  const siteById = new Map(sites.map((s) => [s.id, s]));
+
+  const result: VisitCardInfo[] = submissions.flatMap((submission) => {
+    const site = siteById.get(submission.site);
+    if (!site) return [];
+
+    return [
+      {
+        uuid: submission.uuid,
+        recordedAt: parseISO(submission.created_at),
+        status: "sent" as const,
+        siteName: site.name,
+        address: site.address,
+      },
+    ];
+  });
+
+  setCompleted(result);
+}, []);
 
   useEffect(() => {
     loadQueued();
@@ -57,11 +82,10 @@ export default function SavedVisits({ username }: { username: string | null }) {
           <FlatList
             style={styles.list}
             contentContainerStyle={styles.contentContainer}
-            // contentContainerStyle={pending.length === 0 ? styles.emptyContainer : undefined}
             data={pending}
             keyExtractor={(item) => item.uuid}
             renderItem={({ item }) => (
-              <PendingVisit item={item} />
+              <VisitCard visit={item} />
             )}
             ItemSeparatorComponent={() => (<Separator />)}
             ListEmptyComponent={
@@ -76,11 +100,10 @@ export default function SavedVisits({ username }: { username: string | null }) {
           <FlatList
             style={styles.list}
             contentContainerStyle={styles.contentContainer}
-            // contentContainerStyle={completed.length === 0 ? styles.emptyContainer : undefined}
             data={completed}
             keyExtractor={(item) => item.uuid}
             renderItem={({ item }) => (
-              <CompletedVisit item={item} />
+              <VisitCard visit={item} />
             )}
             ItemSeparatorComponent={() => (<Separator />)}
             ListEmptyComponent={

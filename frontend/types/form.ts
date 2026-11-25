@@ -31,4 +31,5 @@ export type SubmissionBody = {
   site: number;
   uuid: string;
   metadata: Record<string, FieldValue>;
+  created_at: string,
 };
