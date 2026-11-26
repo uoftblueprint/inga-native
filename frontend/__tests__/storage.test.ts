@@ -332,3 +332,25 @@ describe("pending and completed lists", () => {
     expect(completed.map((v) => v.uuid)).toEqual([c.uuid]);
   });
 });
+
+describe("draft updated_at", () => {
+  test("saving bumps updated_at, keeps recorded_at, and orders the list", async () => {
+    const db = await open();
+    const first = await createDraft(db, A, { project_id: 1, site_id: 10 });
+    const second = await createDraft(db, A, { project_id: 1, site_id: 10 });
+
+    await new Promise((r) => setTimeout(r, 5)); // make sure the clock moves
+    await saveDraft(db, A, first.uuid, {
+      project_id: 1,
+      site_id: 10,
+      metadata: { Notes: "x" },
+    });
+
+    const edited = await loadDraft(db, A, first.uuid);
+    expect(edited?.recorded_at).toBe(first.recorded_at);
+    expect(edited!.updated_at > first.updated_at).toBe(true);
+
+    const order = (await listDrafts(db, A)).map((d) => d.uuid);
+    expect(order).toEqual([first.uuid, second.uuid]);
+  });
+});

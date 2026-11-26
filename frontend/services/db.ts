@@ -70,6 +70,7 @@ CREATE INDEX idx_sites_project ON sites (worker_id, project_id);
     worker_id    TEXT NOT NULL,
     uuid         TEXT NOT NULL,
     recorded_at  TEXT NOT NULL,   -- set once when the draft starts, never changed
+    updated_at   TEXT NOT NULL,
     project_id   INTEGER,
     site_id      INTEGER,
     data         TEXT NOT NULL,   -- deliveries, metadata, anything in progress

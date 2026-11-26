@@ -339,7 +339,7 @@ export async function updateVisitStatus(
          attempts = attempts + CASE WHEN ? = 'sending' THEN 1 ELSE 0 END
         
      WHERE worker_id = ? AND uuid = ?`,
-    [lastError, new Date().toISOString(), workerId, uuid],
+    [status, lastError, status, workerId, uuid],
   );
   if (result.changes === 0) throw new Error("Visit not found or already sent");
 }

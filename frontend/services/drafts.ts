@@ -18,10 +18,10 @@ export type DraftPhoto = {
 export type Draft = {
   uuid: string;
   recorded_at: string;
+  updated_at: string;
   data: DraftData;
   photos: DraftPhoto[];
   //   created_at: string;
-  //   updated_at: string;
 };
 
 /** RFC 4122 v4 UUID. Swap for expo-crypto's randomUUID() if the project already has it. */
@@ -43,11 +43,12 @@ export async function createDraft(
   const uuid = newUuid();
   const now = new Date().toISOString();
   await db.runAsync(
-    `INSERT INTO drafts (worker_id, uuid, recorded_at, project_id, site_id, data)
-    VALUES (?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO drafts (worker_id, uuid, recorded_at, updated_at, project_id, site_id, data)
+    VALUES (?, ?, ?, ?, ?, ?, ?)`,
     [
       workerId,
       uuid,
+      now,
       now,
       initial.project_id ?? null,
       initial.site_id ?? null,
@@ -59,6 +60,7 @@ export async function createDraft(
   return {
     uuid,
     recorded_at: now,
+    updated_at: now,
     data: initial,
     photos: [],
     // created_at: now,
@@ -69,9 +71,9 @@ export async function createDraft(
 type DraftRow = {
   uuid: string;
   recorded_at: string;
+  updated_at: string;
   data: string;
   //   created_at: string;
-  //   updated_at: string;
 };
 
 export async function loadDraft(
@@ -80,7 +82,7 @@ export async function loadDraft(
   uuid: string,
 ): Promise<Draft | null> {
   const row = await db.getFirstAsync<DraftRow>(
-    `SELECT uuid, recorded_at, data
+    `SELECT uuid, recorded_at, updated_at, data
      FROM drafts WHERE worker_id = ? AND uuid = ?`,
     [workerId, uuid],
   );
@@ -96,7 +98,7 @@ export async function loadDraft(
 
 export async function listDrafts(db: Db, workerId: string): Promise<Draft[]> {
   const rows = await db.getAllAsync<{ uuid: string }>(
-    "SELECT uuid FROM drafts WHERE worker_id = ? ORDER BY rowid DESC",
+    "SELECT uuid FROM drafts WHERE worker_id = ? ORDER BY updated_at DESC, rowid DESC",
     [workerId],
   );
   const out: Draft[] = [];
@@ -119,12 +121,13 @@ export async function saveDraft(
   data: DraftData,
 ): Promise<boolean> {
   const result = await db.runAsync(
-    `UPDATE drafts SET data = ?, project_id = ?, site_id = ?
+    `UPDATE drafts SET data = ?, project_id = ?, site_id = ?, updated_at = ?
      WHERE worker_id = ? AND uuid = ?`,
     [
       JSON.stringify(data),
       data.project_id ?? null,
       data.site_id ?? null,
+      new Date().toISOString(),
       workerId,
       uuid,
     ],
@@ -157,10 +160,10 @@ export async function addDraftPhoto(
         photo.size_bytes,
       ],
     );
-    // await txn.runAsync(
-    //   "UPDATE drafts SET updated_at = ? WHERE worker_id = ? AND uuid = ?",
-    //   [new Date().toISOString(), workerId, draftUuid],
-    // );
+    await txn.runAsync(
+      "UPDATE drafts SET updated_at = ? WHERE worker_id = ? AND uuid = ?",
+      [new Date().toISOString(), workerId, draftUuid],
+    );
   });
 }
 

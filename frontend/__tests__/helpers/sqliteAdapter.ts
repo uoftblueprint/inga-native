@@ -16,6 +16,12 @@ export function openTestDb(file: string): Db & { close(): void } {
       raw.exec(sql);
     },
     async runAsync(sql: string, params: Params = []) {
+      const marks = (sql.match(/\?/g) ?? []).length;
+      if (marks !== params.length) {
+        throw new Error(
+          `Placeholders: ${marks}, values: ${params.length}\n${sql}`,
+        );
+      }
       const r = raw.prepare(sql).run(...params);
       return { changes: r.changes, lastInsertRowId: Number(r.lastInsertRowid) };
     },
