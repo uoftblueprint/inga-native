@@ -184,6 +184,16 @@ export async function loadSites(
   return rows.map((r) => JSON.parse(r.data) as Site);
 }
 
+export function searchSites(sites: Site[], query: string): Site[] {
+  const q = query.trim().toLowerCase();
+  if (!q) return sites;
+  return sites.filter((s) =>
+    [s.name, s.address, typeof s.region === "object" ? s.region.name : ""].some(
+      (v) => v.toLowerCase().includes(q),
+    ),
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Supply items
 // ---------------------------------------------------------------------------
