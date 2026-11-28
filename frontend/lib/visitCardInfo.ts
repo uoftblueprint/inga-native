@@ -1,20 +1,26 @@
 import { parseISO } from "date-fns";
 import type { QueuedVisit } from "@/services/queue"
 import type { VisitCardInfo } from "@/components/VisitCard";
+import {getSite} from "@/services/sites";
 
-export type DisplaySnapshot = {
-  siteName: string;
-  address: string;
-};
+export async function toCardInfo(v: QueuedVisit): Promise<VisitCardInfo> {
+  let siteName = `Site ${v.site_id}`;
+  let address = "";
 
-export function toCardInfo(v: QueuedVisit): VisitCardInfo {
-  const snap = v.display_snapshot as DisplaySnapshot;
+  try {
+    const site = await getSite(v.site_id);
+    siteName = site.name;
+    address = site.address;
+  } catch {
+    // keep the fallbacks
+  }
+
   return {
     uuid: v.uuid,
     recordedAt: parseISO(v.request.recorded_at),
     status: v.status,
-    siteName: snap.siteName,
-    address: snap.address,
+    siteName,
+    address,
     lastError: v.last_error,
   };
 }

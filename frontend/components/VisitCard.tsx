@@ -1,5 +1,6 @@
 import {StyleSheet, Text, View} from "react-native";
 import {formatDistanceToNow} from "date-fns";
+import {QueuedVisitStatus} from "@/services/queue";
 
 const STATUS_DISPLAY: Record<
   QueuedVisitStatus,
